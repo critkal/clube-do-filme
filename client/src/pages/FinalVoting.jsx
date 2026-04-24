@@ -26,36 +26,48 @@ export default function FinalVoting() {
   }
 
   if (err) return <p className="error">Erro: {err}</p>;
-  if (!data) return <p>Carregando…</p>;
+  if (!data) return <p className="loading">Carregando…</p>;
 
   return (
     <div className="stack">
-      <Link to={`/seasons/${id}`}>← Temporada</Link>
-      <h1>Votação final</h1>
-      <p className="muted">Seu voto é secreto e final — não pode ser alterado.</p>
-      {data.length === 0 && <p>Nenhuma categoria criada.</p>}
+      <Link to={`/seasons/${id}`} className="back-link">← Temporada</Link>
+      <div>
+        <h1>Votação Final</h1>
+        <p className="muted">Seu voto é secreto e final — não pode ser alterado.</p>
+      </div>
+
+      {data.length === 0 && <p className="muted">Nenhuma categoria criada.</p>}
+
       {data.map((cat) => (
-        <div key={cat.id} className="card">
-          <h3>{cat.name}</h3>
-          {cat.nominees.length === 0 && <p className="muted">Sem indicados.</p>}
-          <ul className="grid">
+        <div key={cat.id} className="card stack" style={{ gap: '0.75rem' }}>
+          <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.05rem' }}>{cat.name}</h3>
+          {cat.nominees.length === 0 && <p className="muted" style={{ fontSize: '0.875rem' }}>Sem indicados.</p>}
+          <ul className="list">
             {cat.nominees.map((n) => {
               const voted = cat.your_vote_movie_id != null;
               const mine = cat.your_vote_movie_id === n.id;
               return (
                 <li key={n.id} className={`nominee ${mine ? 'mine' : ''}`}>
-                  <div>
-                    <strong>{n.title}</strong>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>{n.title}</div>
                     {n.average_rating != null && (
-                      <div className="muted">média {n.average_rating.toFixed(2)}</div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--muted)', marginTop: '0.1rem' }}>
+                        <span style={{ color: 'var(--amber)' }}>★</span> {n.average_rating.toFixed(1)} média
+                      </div>
                     )}
                   </div>
                   {voted ? (
                     mine
-                      ? <span className="muted">✓ seu voto</span>
-                      : <span className="muted">já votou</span>
+                      ? <span style={{ fontSize: '0.8rem', color: 'var(--blue)', fontWeight: 600, whiteSpace: 'nowrap' }}>✓ seu voto</span>
+                      : <span className="muted" style={{ fontSize: '0.8rem', whiteSpace: 'nowrap' }}>já votou</span>
                   ) : (
-                    <button disabled={busy[cat.id]} onClick={() => vote(cat.id, n.id)}>Votar</button>
+                    <button
+                      disabled={busy[cat.id]}
+                      onClick={() => vote(cat.id, n.id)}
+                      style={{ flexShrink: 0, fontSize: '0.85rem', minHeight: '36px', padding: '0.4rem 0.8rem' }}
+                    >
+                      Votar
+                    </button>
                   )}
                 </li>
               );

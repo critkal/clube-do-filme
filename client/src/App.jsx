@@ -30,7 +30,7 @@ export default function App() {
 
   useEffect(() => { refreshMe(); }, [refreshMe]);
 
-  if (loading) return <div className="container"><p>Carregando…</p></div>;
+  if (loading) return <div className="container"><p className="loading">Carregando…</p></div>;
 
   const logout = async () => {
     try { await api.logout(); } catch {}

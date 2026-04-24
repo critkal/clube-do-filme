@@ -32,24 +32,28 @@ export default function Login() {
   }
 
   return (
-    <div className="card">
-      <h1>Entrar</h1>
-      <p className="muted">Escolha seu primeiro nome para entrar no clube.</p>
-      <form onSubmit={submit} className="stack">
-        <label>
-          Membro
-          <select value={name} onChange={(e) => setName(e.target.value)} required>
-            <option value="">— selecione —</option>
-            {members.map((m) => (
-              <option key={m.id} value={m.first_name}>{m.first_name}</option>
-            ))}
-          </select>
-        </label>
-        {err && <p className="error">{err}</p>}
-        <button type="submit" disabled={busy || !name}>
-          {busy ? 'Entrando…' : 'Entrar'}
-        </button>
-      </form>
+    <div className="login-wrap">
+      <div className="login-card">
+        <div className="login-brand">Clube do Filme</div>
+        <p className="muted" style={{ marginBottom: '1.5rem', marginTop: '0.25rem' }}>
+          Escolha seu nome para entrar no clube.
+        </p>
+        <form onSubmit={submit} className="stack">
+          <label>
+            Membro
+            <select value={name} onChange={(e) => setName(e.target.value)} required>
+              <option value="">— selecione —</option>
+              {members.map((m) => (
+                <option key={m.id} value={m.first_name}>{m.first_name}</option>
+              ))}
+            </select>
+          </label>
+          {err && <p className="error">{err}</p>}
+          <button type="submit" className="primary" disabled={busy || !name} style={{ marginTop: '0.25rem' }}>
+            {busy ? 'Entrando…' : 'Entrar'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
