@@ -1,0 +1,13 @@
+{
+  "name": "clube-do-filme",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Movie club webapp — monorepo root.",
+  "scripts": {
+    "dev": "concurrently -n server,client -c blue,green \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
+    "install-all": "npm install && npm --prefix server install && npm --prefix client install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
