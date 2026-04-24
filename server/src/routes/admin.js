@@ -90,6 +90,108 @@ router.post('/seasons/:id/complete', requireAdmin, async (req, res) => {
   res.json({ ok: true });
 });
 
+// PUT /api/admin/members/:id { first_name?, is_admin? }
+router.put('/members/:id', requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  const name = req.body?.first_name != null ? String(req.body.first_name).trim() : undefined;
+  const isAdminVal = req.body?.is_admin;
+
+  if (name !== undefined && !name) return res.status(400).json({ error: 'first_name_required' });
+
+  const fields = [];
+  const args = [];
+  if (name !== undefined) { fields.push('first_name = ?'); args.push(name); }
+  if (isAdminVal !== undefined) { fields.push('is_admin = ?'); args.push(isAdminVal ? 1 : 0); }
+  if (!fields.length) return res.status(400).json({ error: 'nothing_to_update' });
+
+  args.push(id);
+  try {
+    await db.execute({ sql: `UPDATE members SET ${fields.join(', ')} WHERE id = ?`, args });
+    res.json({ ok: true });
+  } catch (err) {
+    if (String(err.message || '').includes('UNIQUE')) {
+      return res.status(409).json({ error: 'member_exists' });
+    }
+    throw err;
+  }
+});
+
+// PUT /api/admin/seasons/:id { name? }
+router.put('/seasons/:id', requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  const name = (req.body?.name || '').trim() || null;
+  await db.execute({ sql: 'UPDATE seasons SET name = ? WHERE id = ?', args: [name, id] });
+  res.json({ ok: true });
+});
+
+// DELETE /api/admin/seasons/:id — cascades everything
+router.delete('/seasons/:id', requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  const season = await db.execute({ sql: 'SELECT id FROM seasons WHERE id = ?', args: [id] });
+  if (!season.rows.length) return res.status(404).json({ error: 'not_found' });
+
+  const { rows: movieRows } = await db.execute({
+    sql: 'SELECT poster_public_id FROM movies WHERE season_id = ?',
+    args: [id],
+  });
+
+  await db.execute({ sql: 'DELETE FROM ratings WHERE movie_id IN (SELECT id FROM movies WHERE season_id = ?)', args: [id] });
+  await db.execute({ sql: 'DELETE FROM movie_categories WHERE movie_id IN (SELECT id FROM movies WHERE season_id = ?)', args: [id] });
+  await db.execute({ sql: 'DELETE FROM final_votes WHERE movie_id IN (SELECT id FROM movies WHERE season_id = ?)', args: [id] });
+  await db.execute({ sql: 'DELETE FROM final_votes WHERE season_id = ?', args: [id] });
+  await db.execute({ sql: 'DELETE FROM movies WHERE season_id = ?', args: [id] });
+  await db.execute({ sql: 'DELETE FROM season_members WHERE season_id = ?', args: [id] });
+  await db.execute({ sql: 'DELETE FROM seasons WHERE id = ?', args: [id] });
+
+  for (const r of movieRows) {
+    if (r.poster_public_id) destroyAsset(r.poster_public_id);
+  }
+
+  res.json({ ok: true });
+});
+
+// GET /api/admin/movies — all movies across all seasons
+router.get('/movies', requireAdmin, async (_req, res) => {
+  const { rows } = await db.execute(
+    `SELECT m.id, m.title, m.year, m.director, m.poster_url, m.event_date, m.round_number,
+            m.presenter_id, mem.first_name AS presenter_name,
+            m.season_id, s.name AS season_name
+     FROM movies m
+     LEFT JOIN members mem ON mem.id = m.presenter_id
+     LEFT JOIN seasons s ON s.id = m.season_id
+     ORDER BY m.season_id DESC, m.round_number ASC`,
+  );
+  res.json(rows.map((r) => ({
+    id: r.id,
+    title: r.title,
+    year: r.year,
+    director: r.director,
+    poster_url: r.poster_url,
+    event_date: r.event_date,
+    round_number: r.round_number,
+    presenter_id: r.presenter_id,
+    presenter_name: r.presenter_name,
+    season_id: r.season_id,
+    season_name: r.season_name,
+  })));
+});
+
+// PUT /api/admin/categories/:id { name }
+router.put('/categories/:id', requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  const name = (req.body?.name || '').trim();
+  if (!name) return res.status(400).json({ error: 'name_required' });
+  try {
+    await db.execute({ sql: 'UPDATE categories SET name = ? WHERE id = ?', args: [name, id] });
+    res.json({ ok: true });
+  } catch (err) {
+    if (String(err.message || '').includes('UNIQUE')) {
+      return res.status(409).json({ error: 'category_exists' });
+    }
+    throw err;
+  }
+});
+
 // DELETE /api/admin/movies/:id — cascades ratings, category links, final votes; removes poster
 router.delete('/movies/:id', requireAdmin, async (req, res) => {
   const id = Number(req.params.id);

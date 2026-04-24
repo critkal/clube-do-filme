@@ -69,8 +69,13 @@ export const api = {
   // admin
   createMember: (first_name, is_admin = false) =>
     request('/api/admin/members', { method: 'POST', body: { first_name, is_admin } }),
+  updateMember: (id, data) => request(`/api/admin/members/${id}`, { method: 'PUT', body: data }),
   deleteMember: (id) => request(`/api/admin/members/${id}`, { method: 'DELETE' }),
   createSeason: (name) => request('/api/admin/seasons', { method: 'POST', body: { name } }),
+  updateSeason: (id, data) => request(`/api/admin/seasons/${id}`, { method: 'PUT', body: data }),
   completeSeason: (id) => request(`/api/admin/seasons/${id}/complete`, { method: 'POST' }),
+  deleteSeason: (id) => request(`/api/admin/seasons/${id}`, { method: 'DELETE' }),
+  allMovies: () => request('/api/admin/movies'),
   deleteMovie: (id) => request(`/api/admin/movies/${id}`, { method: 'DELETE' }),
+  updateCategory: (id, name) => request(`/api/admin/categories/${id}`, { method: 'PUT', body: { name } }),
 };
