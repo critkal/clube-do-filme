@@ -9,14 +9,18 @@ export default function Season() {
   const { me } = useAuth();
   const [seasons, setSeasons] = useState([]);
   const [movies, setMovies] = useState([]);
+  const [members, setMembers] = useState([]);
   const [err, setErr] = useState('');
   const [showForm, setShowForm] = useState(false);
 
   const load = async () => {
     try {
-      const [all, ms] = await Promise.all([api.seasons(), api.seasonMovies(id)]);
+      const [all, ms, mems] = await Promise.all([
+        api.seasons(), api.seasonMovies(id), api.seasonMembers(id),
+      ]);
       setSeasons(all);
       setMovies(ms);
+      setMembers(mems);
     } catch (e) {
       setErr(e.message);
     }
@@ -51,6 +55,8 @@ export default function Season() {
           </div>
         )}
       </div>
+
+      {members.length > 0 && <MemberQueue members={members} />}
 
       {isActive && !presenterAlreadyAdded && (
         <>
@@ -92,6 +98,62 @@ export default function Season() {
         </ul>
       )}
     </div>
+  );
+}
+
+function MemberQueue({ members }) {
+  const nextIndex = members.findIndex((m) => !m.hasPresented);
+
+  return (
+    <section className="card">
+      <h3 style={{ marginBottom: '0.75rem', fontSize: '0.95rem', fontWeight: 600 }}>Fila de apresentações</h3>
+      <ol style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+        {members.map((m, i) => {
+          const isNext = i === nextIndex;
+          return (
+            <li
+              key={m.memberId}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '0.45rem 0',
+                borderBottom: i < members.length - 1 ? '1px solid var(--border)' : 'none',
+                opacity: m.hasPresented ? 0.45 : 1,
+              }}
+            >
+              <span style={{ color: 'var(--muted)', fontSize: '0.82rem', minWidth: '1.4rem', fontVariantNumeric: 'tabular-nums' }}>
+                {m.roundOrder}.
+              </span>
+              <span style={{ flex: 1, fontSize: '0.92rem', textDecoration: m.hasPresented ? 'line-through' : 'none' }}>
+                {m.name}
+                {m.hasPresented && m.movieTitle && (
+                  <span className="muted" style={{ fontSize: '0.78rem', textDecoration: 'none' }}>
+                    {' '}· {m.movieTitle}
+                  </span>
+                )}
+              </span>
+              {isNext && (
+                <span style={{
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  padding: '0.15rem 0.55rem',
+                  borderRadius: '20px',
+                  background: 'var(--gradient)',
+                  color: '#fff',
+                  letterSpacing: '0.02em',
+                }}>
+                  próximo
+                </span>
+              )}
+              {m.hasPresented && (
+                <span style={{ color: 'var(--green, #4ade80)', fontSize: '0.85rem' }}>✓</span>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </section>
   );
 }
 

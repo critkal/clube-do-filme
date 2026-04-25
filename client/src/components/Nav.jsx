@@ -14,6 +14,7 @@ export default function Nav() {
               {me.is_admin && <NavLink to="/admin">Admin</NavLink>}
               <span className="nav-divider" />
               <span className="nav-user">{me.first_name}</span>
+              <span className="nav-divider" />
               <button className="link nav-logout" onClick={logout}>Sair</button>
             </>
           )}

@@ -47,6 +47,7 @@ export const api = {
       body: { category_id, movie_id },
     }),
   results: (seasonId) => request(`/api/seasons/${seasonId}/results`),
+  seasonMembers: (id) => request(`/api/seasons/${id}/members`),
 
   // movies
   movie: (id) => request(`/api/movies/${id}`),
@@ -78,4 +79,6 @@ export const api = {
   allMovies: () => request('/api/admin/movies'),
   deleteMovie: (id) => request(`/api/admin/movies/${id}`, { method: 'DELETE' }),
   updateCategory: (id, name) => request(`/api/admin/categories/${id}`, { method: 'PUT', body: { name } }),
+  updateMemberOrder: (seasonId, order) =>
+    request(`/api/admin/seasons/${seasonId}/member-order`, { method: 'PUT', body: { order } }),
 };

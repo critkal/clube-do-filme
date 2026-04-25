@@ -23,6 +23,30 @@ router.get('/', requireAuth, async (_req, res) => {
   );
 });
 
+// GET /api/seasons/:id/members — ordered presentation queue
+router.get('/:id/members', requireAuth, async (req, res) => {
+  const seasonId = Number(req.params.id);
+  const { rows } = await db.execute({
+    sql: `SELECT sm.member_id, sm.round_order, mem.first_name,
+                 CASE WHEN mv.id IS NOT NULL THEN 1 ELSE 0 END AS has_presented,
+                 mv.id AS movie_id, mv.title AS movie_title
+          FROM season_members sm
+          JOIN members mem ON mem.id = sm.member_id
+          LEFT JOIN movies mv ON mv.presenter_id = sm.member_id AND mv.season_id = sm.season_id
+          WHERE sm.season_id = ?
+          ORDER BY sm.round_order ASC`,
+    args: [seasonId],
+  });
+  res.json(rows.map((r) => ({
+    memberId: Number(r.member_id),
+    name: r.first_name,
+    roundOrder: Number(r.round_order),
+    hasPresented: Boolean(r.has_presented),
+    movieId: r.movie_id ? Number(r.movie_id) : null,
+    movieTitle: r.movie_title || null,
+  })));
+});
+
 // GET /api/seasons/:id/movies — aggregated ratings + your_score
 router.get('/:id/movies', requireAuth, async (req, res) => {
   const seasonId = Number(req.params.id);

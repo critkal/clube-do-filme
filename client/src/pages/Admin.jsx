@@ -146,6 +146,7 @@ function SeasonsSection({ seasons, ctx }) {
   const [name, setName] = useState('');
   const [editId, setEditId] = useState(null);
   const [editName, setEditName] = useState('');
+  const [orderSeasonId, setOrderSeasonId] = useState(null);
 
   const create = (e) => {
     e.preventDefault();
@@ -202,6 +203,7 @@ function SeasonsSection({ seasons, ctx }) {
                 </span>
                 <div className="row gap-sm">
                   <button className="link" onClick={() => { setEditId(s.id); setEditName(s.name || ''); }}>editar</button>
+                  <button className="link" onClick={() => setOrderSeasonId(orderSeasonId === s.id ? null : s.id)}>fila</button>
                   {s.status === 'active' && (
                     <button onClick={() => ctx.act(() => api.completeSeason(s.id), 'Encerrada')}>Encerrar</button>
                   )}
@@ -209,10 +211,72 @@ function SeasonsSection({ seasons, ctx }) {
                 </div>
               </div>
             )}
+            {orderSeasonId === s.id && editId !== s.id && (
+              <SeasonMemberOrder
+                seasonId={s.id}
+                ctx={ctx}
+                onClose={() => setOrderSeasonId(null)}
+              />
+            )}
           </li>
         ))}
       </ul>
     </section>
+  );
+}
+
+function SeasonMemberOrder({ seasonId, ctx, onClose }) {
+  const [members, setMembers] = useState([]);
+  const [saving, setSaving] = useState(false);
+
+  const load = () => api.seasonMembers(seasonId).then(setMembers).catch((e) => ctx.setErr(e.message));
+  useEffect(() => { load(); }, [seasonId]);
+
+  const move = (index, dir) => {
+    const next = [...members];
+    const target = index + dir;
+    if (target < 0 || target >= next.length) return;
+    [next[index], next[target]] = [next[target], next[index]];
+    setMembers(next.map((m, i) => ({ ...m, roundOrder: i + 1 })));
+  };
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await api.updateMemberOrder(seasonId, members.map((m) => ({ memberId: m.memberId, roundOrder: m.roundOrder })));
+      ctx.setMsg('Ordem salva');
+    } catch (e) {
+      ctx.setErr(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div style={{ marginTop: '0.5rem', padding: '0.75rem', background: 'var(--surface-2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+      <div className="row space-between" style={{ marginBottom: '0.6rem' }}>
+        <span style={{ fontWeight: 600, fontSize: '0.88rem' }}>Fila de apresentações</span>
+        <button className="link" style={{ fontSize: '0.82rem' }} onClick={onClose}>fechar</button>
+      </div>
+      <ul className="list" style={{ marginBottom: '0.65rem' }}>
+        {members.map((m, i) => (
+          <li key={m.memberId} className="row space-between" style={{ padding: '0.2rem 0', opacity: m.hasPresented ? 0.5 : 1 }}>
+            <span className="row gap-sm">
+              <span className="muted" style={{ fontSize: '0.78rem', minWidth: '1.2rem', fontVariantNumeric: 'tabular-nums' }}>{i + 1}.</span>
+              <span style={{ fontSize: '0.88rem', textDecoration: m.hasPresented ? 'line-through' : 'none' }}>{m.name}</span>
+              {m.hasPresented && <span style={{ color: 'var(--green, #4ade80)', fontSize: '0.8rem' }}>✓</span>}
+            </span>
+            <div className="row gap-sm">
+              <button className="link" style={{ fontSize: '1rem', lineHeight: 1 }} onClick={() => move(i, -1)} disabled={i === 0}>↑</button>
+              <button className="link" style={{ fontSize: '1rem', lineHeight: 1 }} onClick={() => move(i, 1)} disabled={i === members.length - 1}>↓</button>
+            </div>
+          </li>
+        ))}
+      </ul>
+      <button onClick={save} disabled={saving} className="btn primary" style={{ fontSize: '0.82rem', padding: '0.4rem 0.9rem' }}>
+        {saving ? 'Salvando…' : 'Salvar ordem'}
+      </button>
+    </div>
   );
 }
 

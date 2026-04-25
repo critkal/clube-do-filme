@@ -80,99 +80,122 @@ export default function Movie() {
     <div className="stack">
       <Link to={`/seasons/${movie.season_id}`} className="back-link">← Temporada</Link>
 
-      <div className="row gap align-start movie-detail">
-        <MoviePoster src={movie.poster_url} alt={movie.title} size="lg" />
-        <div className="stack" style={{ flex: 1, minWidth: 0 }}>
-          <div>
-            <h1 style={{ marginBottom: '0.2rem' }}>
+      {/* Cinematic hero — poster + info integrated */}
+      <div className="movie-hero card">
+        {movie.poster_url && (
+          <div
+            className="movie-hero-bg"
+            style={{ backgroundImage: `url(${movie.poster_url})` }}
+          />
+        )}
+        <div className="movie-hero-content">
+          <div className="movie-hero-poster">
+            <MoviePoster src={movie.poster_url} alt={movie.title} size="lg" />
+          </div>
+          <div className="movie-hero-info">
+            <h1 style={{ marginBottom: '0.25rem' }}>
               {movie.title}
-              {movie.year && <span className="muted" style={{ fontSize: '1.1rem', fontWeight: 400 }}> ({movie.year})</span>}
+              {movie.year && (
+                <span className="muted" style={{ fontSize: '1rem', fontWeight: 400 }}> ({movie.year})</span>
+              )}
             </h1>
             {movie.director && (
-              <p style={{ margin: '0.1rem 0', fontSize: '0.9rem' }}>
-                <span className="muted">Direção</span>{' '}
+              <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem' }}>
+                <span className="muted">Direção </span>
                 <strong style={{ color: 'var(--text)' }}>{movie.director}</strong>
               </p>
             )}
-            <p className="muted" style={{ margin: '0.3rem 0 0', fontSize: '0.82rem' }}>
-              Apresentado por {movie.presenter_name} · Rodada {movie.round_number}
+            <p className="muted" style={{ margin: 0, fontSize: '0.82rem', lineHeight: 1.7 }}>
+              Apresentado por <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{movie.presenter_name}</strong>
+              <br />
+              Rodada {movie.round_number}
               {movie.event_date && ` · ${movie.event_date}`}
             </p>
-          </div>
 
-          <div className="card">
-            <h3 style={{ marginBottom: '0.6rem' }}>Avaliação</h3>
-            {movie.rating_count > 0 ? (
-              <div style={{ marginBottom: '0.75rem' }}>
-                <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: '0.3rem' }}>
-                  <span style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.6rem', fontWeight: 700, color: 'var(--amber)', lineHeight: 1 }}>
-                    {movie.average_rating.toFixed(1)}
-                  </span>
-                  <span style={{ fontSize: '0.875rem', color: 'var(--amber)', opacity: 0.6 }}>/5</span>
+            {movie.rating_count > 0 && (
+              <div style={{ marginTop: '0.85rem', display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
+                <span style={{
+                  fontFamily: "'Playfair Display', serif",
+                  fontSize: '2rem',
+                  fontWeight: 700,
+                  color: 'var(--amber)',
+                  lineHeight: 1,
+                }}>
+                  {movie.average_rating.toFixed(1)}
                 </span>
-                <span className="muted" style={{ fontSize: '0.8rem', marginLeft: '0.4rem' }}>
+                <span style={{ fontSize: '0.85rem', color: 'var(--amber)', opacity: 0.65 }}>/5</span>
+                <span className="muted" style={{ fontSize: '0.8rem' }}>
                   · {movie.rating_count} voto{movie.rating_count > 1 ? 's' : ''}
                 </span>
               </div>
-            ) : (
-              <p className="muted" style={{ margin: '0 0 0.75rem', fontSize: '0.875rem' }}>Ainda sem votos.</p>
-            )}
-            {!isPresenter ? (
-              <>
-                <p style={{ fontSize: '0.8rem', color: 'var(--muted)', margin: '0 0 0.35rem', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                  Sua nota
-                </p>
-                <StarRating value={movie.your_score || 0} onChange={rate} />
-              </>
-            ) : (
-              <p className="muted" style={{ fontSize: '0.85rem', margin: 0 }}>Você apresentou este filme — não pode se votar.</p>
             )}
           </div>
-
-          <div className="card">
-            <h3 style={{ marginBottom: '0.6rem' }}>Categorias</h3>
-            {movie.categories.length === 0 && (
-              <p className="muted" style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>Nenhuma ainda.</p>
-            )}
-            {movie.categories.length > 0 && (
-              <ul className="tags">
-                {movie.categories.map((c) => (
-                  <li key={c.id} className="tag">
-                    {c.name}
-                    <button className="link-inline" onClick={() => removeCat(c.id)} title="remover" aria-label="remover">×</button>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            <div className="stack" style={{ gap: '0.6rem' }}>
-              <form onSubmit={nominate} className="row gap">
-                <select value={linkCat} onChange={(e) => setLinkCat(e.target.value)} style={{ fontSize: '0.85rem' }}>
-                  <option value="">— indicar em categoria existente —</option>
-                  {unpicked.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-                <button type="submit" disabled={!linkCat} style={{ flexShrink: 0, fontSize: '0.85rem' }}>Indicar</button>
-              </form>
-
-              <form onSubmit={createCategory} className="row gap">
-                <input
-                  placeholder="Nova categoria…"
-                  value={newCat}
-                  onChange={(e) => setNewCat(e.target.value)}
-                  style={{ fontSize: '0.85rem' }}
-                />
-                <button type="submit" disabled={!newCat.trim()} style={{ flexShrink: 0, fontSize: '0.85rem' }}>Criar</button>
-              </form>
-            </div>
-          </div>
-
-          {me.is_admin && (
-            <button className="btn danger" onClick={adminDelete}>Excluir filme</button>
-          )}
         </div>
       </div>
+
+      {/* Rating */}
+      <div className="card">
+        <h3 style={{ marginBottom: '0.65rem' }}>Avaliação</h3>
+        {movie.rating_count === 0 && (
+          <p className="muted" style={{ margin: '0 0 0.65rem', fontSize: '0.875rem' }}>Ainda sem votos.</p>
+        )}
+        {!isPresenter ? (
+          <>
+            <p style={{ fontSize: '0.75rem', color: 'var(--muted)', margin: '0 0 0.4rem', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+              Sua nota
+            </p>
+            <StarRating value={movie.your_score || 0} onChange={rate} />
+          </>
+        ) : (
+          <p className="muted" style={{ fontSize: '0.85rem', margin: 0 }}>
+            Você apresentou este filme — não pode se votar.
+          </p>
+        )}
+      </div>
+
+      {/* Categories */}
+      <div className="card">
+        <h3 style={{ marginBottom: '0.65rem' }}>Categorias</h3>
+        {movie.categories.length === 0 && (
+          <p className="muted" style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>Nenhuma ainda.</p>
+        )}
+        {movie.categories.length > 0 && (
+          <ul className="tags">
+            {movie.categories.map((c) => (
+              <li key={c.id} className="tag">
+                {c.name}
+                <button className="link-inline" onClick={() => removeCat(c.id)} title="remover" aria-label="remover">×</button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <div className="stack" style={{ gap: '0.6rem' }}>
+          <form onSubmit={nominate} className="row gap">
+            <select value={linkCat} onChange={(e) => setLinkCat(e.target.value)} style={{ fontSize: '0.85rem' }}>
+              <option value="">— indicar em categoria existente —</option>
+              {unpicked.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+            <button type="submit" disabled={!linkCat} style={{ flexShrink: 0, fontSize: '0.85rem' }}>Indicar</button>
+          </form>
+
+          <form onSubmit={createCategory} className="row gap">
+            <input
+              placeholder="Nova categoria…"
+              value={newCat}
+              onChange={(e) => setNewCat(e.target.value)}
+              style={{ fontSize: '0.85rem' }}
+            />
+            <button type="submit" disabled={!newCat.trim()} style={{ flexShrink: 0, fontSize: '0.85rem' }}>Criar</button>
+          </form>
+        </div>
+      </div>
+
+      {me.is_admin && (
+        <button className="btn danger" onClick={adminDelete}>Excluir filme</button>
+      )}
     </div>
   );
 }

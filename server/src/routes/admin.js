@@ -176,6 +176,22 @@ router.get('/movies', requireAdmin, async (_req, res) => {
   })));
 });
 
+// PUT /api/admin/seasons/:id/member-order — reorder presentation queue [{ memberId, roundOrder }]
+router.put('/seasons/:id/member-order', requireAdmin, async (req, res) => {
+  const seasonId = Number(req.params.id);
+  const order = req.body?.order;
+  if (!Array.isArray(order) || !order.length) {
+    return res.status(400).json({ error: 'order_required' });
+  }
+  for (const item of order) {
+    await db.execute({
+      sql: 'UPDATE season_members SET round_order = ? WHERE season_id = ? AND member_id = ?',
+      args: [item.roundOrder, seasonId, item.memberId],
+    });
+  }
+  res.json({ ok: true });
+});
+
 // PUT /api/admin/categories/:id { name }
 router.put('/categories/:id', requireAdmin, async (req, res) => {
   const id = Number(req.params.id);

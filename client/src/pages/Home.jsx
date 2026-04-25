@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 
 export default function Home() {
@@ -42,37 +42,57 @@ export default function Home() {
 }
 
 function SeasonCard({ s, featured }) {
+  const navigate = useNavigate();
   const title = s.name || `Temporada #${s.id}`;
   const isActive = s.status === 'active';
+  const progress = s.rounds > 0 ? Math.round((s.movies_added / s.rounds) * 100) : 0;
+  const hasActions = s.status === 'completed';
+
   return (
-    <div className={`card ${featured ? 'featured' : ''}`}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', flexWrap: 'wrap' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', marginBottom: '0.3rem' }}>
-            <h3 style={{ margin: 0 }}>
-              <Link to={`/seasons/${s.id}`} style={{ color: 'var(--text)', textDecoration: 'none' }}>
-                {title}
-              </Link>
-            </h3>
-            <span className={`status-pill ${isActive ? 'active' : 'closed'}`}>
-              {isActive ? 'em andamento' : 'encerrada'}
-            </span>
-          </div>
-          <p className="muted" style={{ margin: 0 }}>
-            {s.movies_added}/{s.rounds} filmes adicionados
-          </p>
+    <div
+      className={`card season-card ${featured ? 'featured' : ''}`}
+      onClick={() => navigate(`/seasons/${s.id}`)}
+      role="link"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && navigate(`/seasons/${s.id}`)}
+    >
+      <div className="season-card-header">
+        <div className="season-card-title-row">
+          <span className="season-card-title">{title}</span>
+          <span className={`status-pill ${isActive ? 'active' : 'closed'}`}>
+            {isActive ? 'em andamento' : 'encerrada'}
+          </span>
         </div>
-        {s.status === 'completed' && (
-          <div className="row gap" style={{ flexShrink: 0 }}>
-            <Link to={`/seasons/${s.id}/final-voting`} className="btn" style={{ fontSize: '0.8rem', minHeight: '36px', padding: '0.4rem 0.7rem' }}>
-              Votação
-            </Link>
-            <Link to={`/seasons/${s.id}/results`} className="btn" style={{ fontSize: '0.8rem', minHeight: '36px', padding: '0.4rem 0.7rem' }}>
-              Resultados
-            </Link>
-          </div>
-        )}
+
+        <div className="season-progress-track">
+          <div className="season-progress-fill" style={{ width: `${progress}%` }} />
+        </div>
+        <p className="season-progress-label">
+          {s.movies_added} de {s.rounds} filmes adicionados
+        </p>
       </div>
+
+      {hasActions && (
+        <div
+          className="season-card-actions"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Link
+            to={`/seasons/${s.id}/final-voting`}
+            className="btn"
+            style={{ fontSize: '0.82rem', minHeight: '36px', padding: '0.4rem 0.85rem' }}
+          >
+            Votação final
+          </Link>
+          <Link
+            to={`/seasons/${s.id}/results`}
+            className="btn"
+            style={{ fontSize: '0.82rem', minHeight: '36px', padding: '0.4rem 0.85rem' }}
+          >
+            Resultados
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
