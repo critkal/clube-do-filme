@@ -72,9 +72,19 @@ const SCHEMA_STATEMENTS = [
   )`,
 ];
 
+const MIGRATIONS = [
+  'ALTER TABLE movies ADD COLUMN tmdb_id INTEGER',
+  'ALTER TABLE movies ADD COLUMN synopsis TEXT',
+  'ALTER TABLE movies ADD COLUMN genre TEXT',
+  'ALTER TABLE movies ADD COLUMN runtime INTEGER',
+];
+
 async function initSchema() {
   for (const stmt of SCHEMA_STATEMENTS) {
     await db.execute(stmt);
+  }
+  for (const sql of MIGRATIONS) {
+    try { await db.execute(sql); } catch { /* column already exists */ }
   }
 }
 

@@ -13,6 +13,7 @@ const seasonRoutes = require('./routes/seasons');
 const { moviesRouter, seasonScopedMoviesRouter } = require('./routes/movies');
 const categoryRoutes = require('./routes/categories');
 const adminRoutes = require('./routes/admin');
+const tmdbRoutes = require('./routes/tmdb');
 
 const app = express();
 
@@ -48,6 +49,7 @@ app.use('/api/seasons', seasonScopedMoviesRouter); // POST /api/seasons/:seasonI
 app.use('/api/movies', moviesRouter);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/tmdb', tmdbRoutes);
 
 // Error handler
 // eslint-disable-next-line no-unused-vars

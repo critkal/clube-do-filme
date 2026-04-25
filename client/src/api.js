@@ -50,6 +50,8 @@ export const api = {
     }),
   results: (seasonId) => request(`/api/seasons/${seasonId}/results`),
   seasonMembers: (id) => request(`/api/seasons/${id}/members`),
+  searchTMDB: (q) => request(`/api/tmdb/search?q=${encodeURIComponent(q)}`),
+  tmdbMovie: (id) => request(`/api/tmdb/movie/${id}`),
 
   // movies
   movie: (id) => request(`/api/movies/${id}`),

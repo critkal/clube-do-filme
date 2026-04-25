@@ -110,16 +110,16 @@ export default function Movie() {
                 <span className="muted" style={{ fontSize: '1rem', fontWeight: 400 }}> ({movie.year})</span>
               )}
             </h1>
-            {movie.director && (
-              <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem' }}>
-                <span className="muted">Direção </span>
-                <strong style={{ color: 'var(--text)' }}>{movie.director}</strong>
-              </p>
-            )}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem 0.75rem', margin: '0 0 0.5rem', fontSize: '0.85rem' }}>
+              {movie.director && (
+                <span><span className="muted">dir. </span><strong style={{ color: 'var(--text)', fontWeight: 600 }}>{movie.director}</strong></span>
+              )}
+              {movie.genre && <span className="muted">{movie.genre}</span>}
+              {movie.runtime && <span className="muted">{movie.runtime} min</span>}
+            </div>
             <p className="muted" style={{ margin: 0, fontSize: '0.82rem', lineHeight: 1.7 }}>
               Apresentado por <strong style={{ color: 'var(--text)', fontWeight: 600 }}>{movie.presenter_name}</strong>
-              <br />
-              Rodada {movie.round_number}
+              {' · '}Rodada {movie.round_number}
               {movie.event_date && ` · ${movie.event_date}`}
             </p>
 
@@ -143,6 +143,12 @@ export default function Movie() {
           </div>
         </div>
       </div>
+
+      {movie.synopsis && (
+        <div className="card" style={{ fontSize: '0.88rem', lineHeight: 1.65, color: 'var(--muted)' }}>
+          {movie.synopsis}
+        </div>
+      )}
 
       {/* Rating */}
       <div className="card">

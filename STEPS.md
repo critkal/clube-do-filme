@@ -35,17 +35,17 @@
 
 ---
 
-## 6. Lista ordenada de membros na temporada
-- Na página `/seasons/:id`, exibir lista ordenada dos membros que vão apresentar filme
-- Cada posição mostra: número da rodada, nome do membro, status (já apresentou / próximo / aguardando)
-- Armazenar a ordem como `presentation_order` vinculada à temporada
+## ~~6. Lista ordenada de membros na temporada~~ ✅
+- ~~Na página `/seasons/:id`, exibir lista ordenada dos membros que vão apresentar filme~~
+- ~~Cada posição mostra: número da rodada, nome do membro, status (já apresentou / próximo / aguardando)~~
+- ~~Armazenar a ordem como `presentation_order` vinculada à temporada~~
 
 ---
 
-## 7. Geração aleatória da lista ao iniciar temporada
-- Ao criar uma nova temporada, gerar automaticamente a ordem de apresentação embaralhando os membros ativos
-- Admin pode reordenar manualmente se necessário antes da temporada começar
-- Registrar a lista gerada na tabela `presentation_order` (nova tabela: `season_member_order`)
+## ~~7. Geração aleatória da lista ao iniciar temporada~~ ✅
+- ~~Ao criar uma nova temporada, gerar automaticamente a ordem de apresentação embaralhando os membros ativos~~
+- ~~Admin pode reordenar manualmente se necessário antes da temporada começar~~
+- ~~Registrar a lista gerada na tabela `presentation_order` (nova tabela: `season_member_order`)~~
 
 ---
 

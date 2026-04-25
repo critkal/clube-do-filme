@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../App.jsx';
@@ -158,24 +158,99 @@ function MemberQueue({ members }) {
 }
 
 function AddMovieForm({ seasonId, onDone }) {
+  // Search state
+  const [query, setQuery] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Selection / mode
+  const [selected, setSelected] = useState(null); // full TMDB details
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  const [manual, setManual] = useState(false);
+
+  // Form fields (populated from TMDB or typed manually)
   const [title, setTitle] = useState('');
   const [year, setYear] = useState('');
   const [director, setDirector] = useState('');
-  const [eventDate, setEventDate] = useState('');
-  const [poster, setPoster] = useState(null);
+  const [synopsis, setSynopsis] = useState('');
+  const [genre, setGenre] = useState('');
+  const [runtime, setRuntime] = useState('');
+  const [customPoster, setCustomPoster] = useState(null);
+
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
+  const searchRef = useRef(null);
+
+  // Debounced TMDB search
+  useEffect(() => {
+    if (manual || !query || query.length < 2) { setSuggestions([]); return; }
+    const t = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const res = await api.searchTMDB(query);
+        setSuggestions(res);
+        setShowSuggestions(true);
+      } catch { setSuggestions([]); }
+      finally { setSearching(false); }
+    }, 420);
+    return () => clearTimeout(t);
+  }, [query, manual]);
+
+  async function pickSuggestion(s) {
+    setShowSuggestions(false);
+    setLoadingDetails(true);
+    try {
+      const details = await api.tmdbMovie(s.tmdb_id);
+      setSelected(details);
+      setTitle(details.title || '');
+      setYear(details.year ? String(details.year) : '');
+      setDirector(details.director || '');
+      setSynopsis(details.synopsis || '');
+      setGenre(details.genre || '');
+      setRuntime(details.runtime ? String(details.runtime) : '');
+    } catch {
+      setManual(true);
+      setTitle(s.title);
+      setYear(s.year ? String(s.year) : '');
+    } finally {
+      setLoadingDetails(false);
+    }
+  }
+
+  function goManual() {
+    setManual(true);
+    setSelected(null);
+    setSuggestions([]);
+    setShowSuggestions(false);
+  }
+
+  function reset() {
+    setManual(false);
+    setSelected(null);
+    setQuery('');
+    setSuggestions([]);
+    setTitle(''); setYear(''); setDirector('');
+    setSynopsis(''); setGenre(''); setRuntime('');
+    setCustomPoster(null);
+    setTimeout(() => searchRef.current?.focus(), 50);
+  }
 
   async function submit(e) {
     e.preventDefault();
+    if (!title.trim()) return;
     setErr(''); setBusy(true);
     try {
       const fd = new FormData();
-      fd.append('title', title);
+      fd.append('title', title.trim());
       if (year) fd.append('year', year);
       if (director) fd.append('director', director);
-      if (eventDate) fd.append('event_date', eventDate);
-      if (poster) fd.append('poster', poster);
+      if (synopsis) fd.append('synopsis', synopsis);
+      if (genre) fd.append('genre', genre);
+      if (runtime) fd.append('runtime', runtime);
+      if (selected?.tmdb_id) fd.append('tmdb_id', selected.tmdb_id);
+      if (selected?.poster_url && !customPoster) fd.append('tmdb_poster_url', selected.poster_url);
+      if (customPoster) fd.append('poster', customPoster);
       await api.addMovie(seasonId, fd);
       onDone?.();
     } catch (e2) {
@@ -185,17 +260,136 @@ function AddMovieForm({ seasonId, onDone }) {
     }
   }
 
+  const hasSelection = Boolean(selected);
+  const showForm = hasSelection || manual;
+
   return (
-    <form onSubmit={submit} className="card stack">
-      <label>Título<input value={title} onChange={(e) => setTitle(e.target.value)} required /></label>
-      <div className="row gap">
-        <label style={{ flex: 1 }}>Ano<input type="number" value={year} onChange={(e) => setYear(e.target.value)} /></label>
-        <label style={{ flex: 2 }}>Diretor<input value={director} onChange={(e) => setDirector(e.target.value)} /></label>
-      </div>
-      <label>Data do encontro<input type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} /></label>
-      <label>Pôster<input type="file" accept="image/*" onChange={(e) => setPoster(e.target.files?.[0] || null)} /></label>
-      {err && <p className="error">{err}</p>}
-      <button type="submit" className="primary" disabled={busy}>{busy ? 'Enviando…' : 'Adicionar filme'}</button>
-    </form>
+    <div className="card stack">
+      {/* Search or reset */}
+      {!showForm && (
+        <div style={{ position: 'relative' }}>
+          <label>Buscar filme
+            <div style={{ position: 'relative' }}>
+              <input
+                ref={searchRef}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Digite o título…"
+                autoFocus
+                autoComplete="off"
+                onFocus={() => suggestions.length && setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 180)}
+              />
+              {searching && (
+                <span style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', fontSize: '0.8rem' }}>
+                  buscando…
+                </span>
+              )}
+            </div>
+          </label>
+
+          {showSuggestions && suggestions.length > 0 && (
+            <ul className="tmdb-suggestions">
+              {suggestions.map((s) => (
+                <li key={s.tmdb_id}>
+                  <button type="button" className="tmdb-suggestion-btn" onMouseDown={() => pickSuggestion(s)}>
+                    {s.poster_thumb
+                      ? <img src={s.poster_thumb} alt={s.title} className="tmdb-thumb" />
+                      : <div className="tmdb-thumb tmdb-thumb-placeholder">🎬</div>
+                    }
+                    <span className="tmdb-suggestion-info">
+                      <span className="tmdb-suggestion-title">{s.title}</span>
+                      {s.year && <span className="tmdb-suggestion-year">{s.year}</span>}
+                    </span>
+                  </button>
+                </li>
+              ))}
+              <li>
+                <button type="button" className="tmdb-manual-btn" onMouseDown={goManual}>
+                  Não encontrei meu filme — cadastrar manualmente
+                </button>
+              </li>
+            </ul>
+          )}
+
+          {loadingDetails && <p className="muted" style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>Carregando detalhes…</p>}
+        </div>
+      )}
+
+      {/* Selected movie preview or manual header */}
+      {hasSelection && (
+        <div className="tmdb-selected">
+          {selected.poster_thumb && (
+            <img src={selected.poster_thumb} alt={selected.title} className="tmdb-selected-poster" />
+          )}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontWeight: 600, margin: '0 0 0.15rem', fontSize: '0.95rem' }}>{selected.title}</p>
+            <p className="muted" style={{ margin: 0, fontSize: '0.8rem' }}>
+              {[selected.year, selected.director].filter(Boolean).join(' · ')}
+              {selected.runtime && ` · ${selected.runtime} min`}
+            </p>
+          </div>
+          <button type="button" className="link" style={{ fontSize: '0.8rem', flexShrink: 0 }} onClick={reset}>trocar</button>
+        </div>
+      )}
+      {manual && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>Cadastro manual</span>
+          <button type="button" className="link" style={{ fontSize: '0.8rem' }} onClick={reset}>← buscar pelo TMDB</button>
+        </div>
+      )}
+
+      {/* Form fields */}
+      {showForm && (
+        <form onSubmit={submit} className="stack" style={{ gap: '0.75rem' }}>
+          <label>Título
+            <input value={title} onChange={(e) => setTitle(e.target.value)} required />
+          </label>
+          <div className="row gap">
+            <label style={{ flex: 1 }}>Ano
+              <input type="number" value={year} onChange={(e) => setYear(e.target.value)} />
+            </label>
+            <label style={{ flex: 1 }}>Duração (min)
+              <input type="number" value={runtime} onChange={(e) => setRuntime(e.target.value)} />
+            </label>
+          </div>
+          <label>Diretor
+            <input value={director} onChange={(e) => setDirector(e.target.value)} />
+          </label>
+          <label>Gênero
+            <input value={genre} onChange={(e) => setGenre(e.target.value)} />
+          </label>
+          {manual && (
+            <label>Sinopse
+              <textarea
+                value={synopsis}
+                onChange={(e) => setSynopsis(e.target.value)}
+                rows={3}
+                style={{ resize: 'vertical', fontFamily: 'inherit', fontSize: '0.9rem', padding: '0.6rem 0.8rem', background: 'var(--surface-2)', color: 'var(--text)', border: '1px solid var(--border-bright)', borderRadius: 'var(--radius-sm)', width: '100%' }}
+              />
+            </label>
+          )}
+          <label>Pôster personalizado (opcional)
+            <input type="file" accept="image/*" onChange={(e) => setCustomPoster(e.target.files?.[0] || null)} />
+          </label>
+          {err && <p className="error">{err}</p>}
+          <button type="submit" className="primary" disabled={busy || !title.trim()}>
+            {busy ? 'Enviando…' : 'Adicionar filme'}
+          </button>
+        </form>
+      )}
+
+      {!showForm && !loadingDetails && query.length >= 2 && suggestions.length === 0 && !searching && (
+        <button type="button" className="link" style={{ fontSize: '0.85rem', textAlign: 'left' }} onClick={goManual}>
+          Nenhum resultado — cadastrar manualmente
+        </button>
+      )}
+
+      {!showForm && query.length === 0 && (
+        <button type="button" className="link" style={{ fontSize: '0.85rem', textAlign: 'left' }} onClick={goManual}>
+          Cadastrar manualmente sem buscar
+        </button>
+      )}
+    </div>
   );
 }

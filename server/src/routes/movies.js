@@ -56,6 +56,11 @@ seasonScopedRouter.post('/:seasonId/movies', requireAuth, upload.single('poster'
   const year = req.body.year ? Number(req.body.year) : null;
   const director = (req.body.director || '').trim() || null;
   const eventDate = (req.body.event_date || '').trim() || null;
+  const tmdbId = req.body.tmdb_id ? Number(req.body.tmdb_id) : null;
+  const synopsis = (req.body.synopsis || '').trim() || null;
+  const genre = (req.body.genre || '').trim() || null;
+  const runtime = req.body.runtime ? Number(req.body.runtime) : null;
+  const tmdbPosterUrl = (req.body.tmdb_poster_url || '').trim() || null;
 
   let presenterId = req.member.id;
   if (req.body.presenter_id && req.member.is_admin) {
@@ -71,7 +76,7 @@ seasonScopedRouter.post('/:seasonId/movies', requireAuth, upload.single('poster'
   const slot = await findOpenRoundNumber(seasonId);
   if (slot.error) return res.status(400).json({ error: slot.error });
 
-  let posterUrl = null;
+  let posterUrl = tmdbPosterUrl;
   let posterPublicId = null;
   if (req.file) {
     try {
@@ -85,10 +90,14 @@ seasonScopedRouter.post('/:seasonId/movies', requireAuth, upload.single('poster'
 
   const inserted = await db.execute({
     sql: `INSERT INTO movies
-            (title, year, director, poster_url, poster_public_id, event_date, presenter_id, season_id, round_number)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (title, year, director, poster_url, poster_public_id, event_date,
+             tmdb_id, synopsis, genre, runtime,
+             presenter_id, season_id, round_number)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           RETURNING id`,
-    args: [title, year, director, posterUrl, posterPublicId, eventDate, presenterId, seasonId, slot.round],
+    args: [title, year, director, posterUrl, posterPublicId, eventDate,
+           tmdbId, synopsis, genre, runtime,
+           presenterId, seasonId, slot.round],
   });
 
   await maybeCloseSeason(seasonId);
@@ -126,6 +135,10 @@ router.get('/:id', requireAuth, async (req, res) => {
     director: row.director,
     poster_url: row.poster_url,
     event_date: row.event_date,
+    tmdb_id: row.tmdb_id ? Number(row.tmdb_id) : null,
+    synopsis: row.synopsis || null,
+    genre: row.genre || null,
+    runtime: row.runtime ? Number(row.runtime) : null,
     presenter_id: row.presenter_id,
     presenter_name: row.presenter_name,
     season_id: row.season_id,
