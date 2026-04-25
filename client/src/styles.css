@@ -256,6 +256,7 @@ button:hover:not(:disabled), .btn:hover {
   background: var(--surface-3);
 }
 button:disabled { opacity: 0.45; cursor: not-allowed; }
+button.danger:disabled { cursor: wait; opacity: 0.65; }
 
 button.primary, .btn.primary {
   background: var(--gradient);
@@ -287,6 +288,32 @@ button.link {
   padding: 0;
   min-height: auto;
   font-weight: 500;
+}
+button.link-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--blue);
+  padding: 0.2rem 0.55rem;
+  min-height: 30px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  border-radius: 6px;
+}
+button.link-btn:hover:not(:disabled) {
+  background: var(--surface-3);
+  border-color: var(--border-bright);
+  color: var(--text);
+}
+button.link-btn.open {
+  color: var(--blue);
+  background: rgba(79, 142, 247, 0.08);
+  border-color: rgba(79, 142, 247, 0.3);
+}
+button.link-btn.danger { color: var(--danger); }
+button.link-btn.danger:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.08);
+  border-color: rgba(248, 113, 113, 0.3);
+  color: var(--danger);
 }
 button.link-inline {
   background: transparent;

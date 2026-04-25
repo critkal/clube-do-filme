@@ -14,6 +14,8 @@ export default function Movie() {
   const [err, setErr] = useState('');
   const [newCat, setNewCat] = useState('');
   const [linkCat, setLinkCat] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [removingCatId, setRemovingCatId] = useState(null);
 
   const load = async () => {
     try {
@@ -60,18 +62,27 @@ export default function Movie() {
   }
 
   async function removeCat(catId) {
+    setRemovingCatId(catId);
     try {
       await api.removeMovieCategory(movie.id, catId);
       await load();
-    } catch (e) { setErr(e.message); }
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setRemovingCatId(null);
+    }
   }
 
   async function adminDelete() {
     if (!window.confirm(`Excluir "${movie.title}"?`)) return;
+    setDeleting(true);
     try {
       await api.deleteMovie(movie.id);
       navigate(`/seasons/${movie.season_id}`);
-    } catch (e) { setErr(e.message); }
+    } catch (e) {
+      setErr(e.message);
+      setDeleting(false);
+    }
   }
 
   const unpicked = cats.filter((c) => !movie.categories.some((mc) => mc.id === c.id));
@@ -164,7 +175,15 @@ export default function Movie() {
             {movie.categories.map((c) => (
               <li key={c.id} className="tag">
                 {c.name}
-                <button className="link-inline" onClick={() => removeCat(c.id)} title="remover" aria-label="remover">×</button>
+                <button
+                  className="link-inline"
+                  onClick={() => removeCat(c.id)}
+                  disabled={removingCatId === c.id}
+                  title="remover"
+                  aria-label="remover"
+                >
+                  {removingCatId === c.id ? '…' : '×'}
+                </button>
               </li>
             ))}
           </ul>
@@ -194,7 +213,9 @@ export default function Movie() {
       </div>
 
       {me.is_admin && (
-        <button className="btn danger" onClick={adminDelete}>Excluir filme</button>
+        <button className="btn danger" onClick={adminDelete} disabled={deleting}>
+          {deleting ? 'Excluindo…' : 'Excluir filme'}
+        </button>
       )}
     </div>
   );

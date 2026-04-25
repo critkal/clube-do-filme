@@ -17,6 +17,7 @@ export default function Admin() {
   const [cats, setCats] = useState([]);
   const [err, setErr] = useState('');
   const [msg, setMsg] = useState('');
+  const [pending, setPending] = useState(null);
 
   const load = async () => {
     const [m, s, mv, c] = await Promise.all([
@@ -27,19 +28,22 @@ export default function Admin() {
 
   useEffect(() => { load().catch((e) => setErr(e.message)); }, []);
 
-  const act = async (fn, successMsg = 'Salvo') => {
+  const act = async (fn, successMsg = 'Salvo', id = null) => {
     setErr(''); setMsg('');
+    if (id !== null) setPending(id);
     try {
       const r = await fn();
-      if (r === false) return;
+      if (r === false) { setPending(null); return; }
       await load();
       setMsg(successMsg);
     } catch (e) {
       setErr(e.message);
+    } finally {
+      setPending(null);
     }
   };
 
-  const ctx = { act, setErr, setMsg, load };
+  const ctx = { act, setErr, setMsg, load, pending };
 
   return (
     <div className="stack">
@@ -73,11 +77,12 @@ function MembersSection({ members, ctx }) {
   const [editId, setEditId] = useState(null);
   const [editName, setEditName] = useState('');
   const [editIsAdmin, setEditIsAdmin] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const create = (e) => {
     e.preventDefault();
     if (!name.trim()) return;
-    ctx.act(() => api.createMember(name.trim(), isAdmin), 'Membro criado');
+    ctx.act(() => api.createMember(name.trim(), isAdmin), 'Membro criado', 'creating-member');
     setName(''); setIsAdmin(false);
   };
 
@@ -87,13 +92,20 @@ function MembersSection({ members, ctx }) {
 
   const saveEdit = async () => {
     ctx.setErr(''); ctx.setMsg('');
+    setSaving(true);
     try {
       await api.updateMember(editId, { first_name: editName.trim(), is_admin: editIsAdmin });
       await ctx.load();
       setEditId(null);
       ctx.setMsg('Salvo');
-    } catch (e) { ctx.setErr(e.message); }
+    } catch (e) {
+      ctx.setErr(e.message);
+    } finally {
+      setSaving(false);
+    }
   };
+
+  const creating = ctx.pending === 'creating-member';
 
   return (
     <section className="card">
@@ -104,7 +116,9 @@ function MembersSection({ members, ctx }) {
           <input type="checkbox" checked={isAdmin} onChange={(e) => setIsAdmin(e.target.checked)} style={{ width: 'auto', minHeight: 'auto' }} />
           admin
         </label>
-        <button type="submit" disabled={!name.trim()}>Adicionar</button>
+        <button type="submit" disabled={!name.trim() || creating}>
+          {creating ? 'Adicionando…' : 'Adicionar'}
+        </button>
       </form>
       <ul className="list">
         {members.map((m) => (
@@ -119,7 +133,9 @@ function MembersSection({ members, ctx }) {
                   </label>
                 </div>
                 <div className="row gap-sm">
-                  <button onClick={saveEdit} disabled={!editName.trim()}>Salvar</button>
+                  <button onClick={saveEdit} disabled={!editName.trim() || saving}>
+                    {saving ? 'Salvando…' : 'Salvar'}
+                  </button>
                   <button className="link" onClick={() => setEditId(null)}>Cancelar</button>
                 </div>
               </div>
@@ -130,8 +146,14 @@ function MembersSection({ members, ctx }) {
                   {m.is_admin && <span className="badge">admin</span>}
                 </span>
                 <div className="row gap-sm">
-                  <button className="link" onClick={() => startEdit(m)}>editar</button>
-                  <button className="link danger" onClick={() => ctx.act(() => api.deleteMember(m.id), 'Removido')}>remover</button>
+                  <button className="link-btn" onClick={() => startEdit(m)}>editar</button>
+                  <button
+                    className="link-btn danger"
+                    onClick={() => ctx.act(() => api.deleteMember(m.id), 'Removido', `member-${m.id}`)}
+                    disabled={ctx.pending === `member-${m.id}`}
+                  >
+                    {ctx.pending === `member-${m.id}` ? 'removendo…' : 'remover'}
+                  </button>
                 </div>
               </div>
             )}
@@ -147,34 +169,44 @@ function SeasonsSection({ seasons, ctx }) {
   const [editId, setEditId] = useState(null);
   const [editName, setEditName] = useState('');
   const [orderSeasonId, setOrderSeasonId] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const create = (e) => {
     e.preventDefault();
-    ctx.act(() => api.createSeason(name.trim() || null), 'Temporada criada');
+    ctx.act(() => api.createSeason(name.trim() || null), 'Temporada criada', 'creating-season');
     setName('');
   };
 
   const saveEdit = async () => {
     ctx.setErr(''); ctx.setMsg('');
+    setSaving(true);
     try {
       await api.updateSeason(editId, { name: editName.trim() || null });
       await ctx.load();
       setEditId(null);
       ctx.setMsg('Salvo');
-    } catch (e) { ctx.setErr(e.message); }
+    } catch (e) {
+      ctx.setErr(e.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const deleteSeason = (s) => ctx.act(async () => {
     if (!window.confirm(`Excluir "${s.name || `Temporada #${s.id}`}"?\nIsso remove todos os filmes, avaliações e votos.`)) return false;
     await api.deleteSeason(s.id);
-  }, 'Temporada excluída');
+  }, 'Temporada excluída', `season-${s.id}`);
+
+  const creating = ctx.pending === 'creating-season';
 
   return (
     <section className="card">
       <h2>Temporadas</h2>
       <form onSubmit={create} className="row gap" style={{ marginBottom: '0.75rem' }}>
         <input placeholder="Nome (opcional)" value={name} onChange={(e) => setName(e.target.value)} />
-        <button type="submit">Criar temporada</button>
+        <button type="submit" disabled={creating}>
+          {creating ? 'Criando…' : 'Criar temporada'}
+        </button>
       </form>
       <ul className="list">
         {seasons.map((s) => (
@@ -188,7 +220,9 @@ function SeasonsSection({ seasons, ctx }) {
                   style={{ flex: 1 }}
                 />
                 <div className="row gap-sm">
-                  <button onClick={saveEdit}>Salvar</button>
+                  <button onClick={saveEdit} disabled={saving}>
+                    {saving ? 'Salvando…' : 'Salvar'}
+                  </button>
                   <button className="link" onClick={() => setEditId(null)}>Cancelar</button>
                 </div>
               </div>
@@ -201,13 +235,31 @@ function SeasonsSection({ seasons, ctx }) {
                     {s.status === 'active' ? 'ativa' : 'encerrada'}
                   </span>
                 </span>
-                <div className="row gap-sm">
-                  <button className="link" onClick={() => { setEditId(s.id); setEditName(s.name || ''); }}>editar</button>
-                  <button className="link" onClick={() => setOrderSeasonId(orderSeasonId === s.id ? null : s.id)}>fila</button>
+                <div className="row" style={{ gap: '0.35rem', flexWrap: 'wrap' }}>
+                  <button className="link-btn" onClick={() => { setEditId(s.id); setEditName(s.name || ''); }}>
+                    editar
+                  </button>
+                  <button
+                    className={`link-btn${orderSeasonId === s.id ? ' open' : ''}`}
+                    onClick={() => setOrderSeasonId(orderSeasonId === s.id ? null : s.id)}
+                  >
+                    {orderSeasonId === s.id ? 'fechar fila' : 'fila'}
+                  </button>
                   {s.status === 'active' && (
-                    <button onClick={() => ctx.act(() => api.completeSeason(s.id), 'Encerrada')}>Encerrar</button>
+                    <button
+                      onClick={() => ctx.act(() => api.completeSeason(s.id), 'Encerrada', `complete-${s.id}`)}
+                      disabled={ctx.pending === `complete-${s.id}`}
+                    >
+                      {ctx.pending === `complete-${s.id}` ? 'Encerrando…' : 'Encerrar'}
+                    </button>
                   )}
-                  <button className="link danger" onClick={() => deleteSeason(s)}>excluir</button>
+                  <button
+                    className="link-btn danger"
+                    onClick={() => deleteSeason(s)}
+                    disabled={ctx.pending === `season-${s.id}`}
+                  >
+                    {ctx.pending === `season-${s.id}` ? 'excluindo…' : 'excluir'}
+                  </button>
                 </div>
               </div>
             )}
@@ -288,7 +340,7 @@ function MoviesSection({ movies, seasons, ctx }) {
   const deleteMovie = (m) => ctx.act(async () => {
     if (!window.confirm(`Excluir "${m.title}"?`)) return false;
     await api.deleteMovie(m.id);
-  }, 'Filme excluído');
+  }, 'Filme excluído', `movie-${m.id}`);
 
   if (movies.length === 0) {
     return <p className="muted">Nenhum filme cadastrado.</p>;
@@ -322,7 +374,13 @@ function MoviesSection({ movies, seasons, ctx }) {
                     >
                       ver
                     </Link>
-                    <button className="link danger" onClick={() => deleteMovie(m)}>excluir</button>
+                    <button
+                      className="link-btn danger"
+                      onClick={() => deleteMovie(m)}
+                      disabled={ctx.pending === `movie-${m.id}`}
+                    >
+                      {ctx.pending === `movie-${m.id}` ? 'excluindo…' : 'excluir'}
+                    </button>
                   </div>
                 </li>
               ))}
@@ -338,30 +396,40 @@ function CategoriesSection({ cats, ctx }) {
   const [name, setName] = useState('');
   const [editId, setEditId] = useState(null);
   const [editName, setEditName] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const create = (e) => {
     e.preventDefault();
     if (!name.trim()) return;
-    ctx.act(() => api.createCategory(name.trim()), 'Categoria criada');
+    ctx.act(() => api.createCategory(name.trim()), 'Categoria criada', 'creating-cat');
     setName('');
   };
 
   const saveEdit = async () => {
     ctx.setErr(''); ctx.setMsg('');
+    setSaving(true);
     try {
       await api.updateCategory(editId, editName.trim());
       await ctx.load();
       setEditId(null);
       ctx.setMsg('Salvo');
-    } catch (e) { ctx.setErr(e.message); }
+    } catch (e) {
+      ctx.setErr(e.message);
+    } finally {
+      setSaving(false);
+    }
   };
+
+  const creating = ctx.pending === 'creating-cat';
 
   return (
     <section className="card">
       <h2>Categorias</h2>
       <form onSubmit={create} className="row gap" style={{ marginBottom: '0.75rem' }}>
         <input placeholder="Nome da categoria" value={name} onChange={(e) => setName(e.target.value)} />
-        <button type="submit" disabled={!name.trim()}>Adicionar</button>
+        <button type="submit" disabled={!name.trim() || creating}>
+          {creating ? 'Adicionando…' : 'Adicionar'}
+        </button>
       </form>
       <ul className="list">
         {cats.map((c) => (
@@ -370,7 +438,9 @@ function CategoriesSection({ cats, ctx }) {
               <div className="row space-between">
                 <input value={editName} onChange={(e) => setEditName(e.target.value)} style={{ flex: 1 }} />
                 <div className="row gap-sm">
-                  <button onClick={saveEdit} disabled={!editName.trim()}>Salvar</button>
+                  <button onClick={saveEdit} disabled={!editName.trim() || saving}>
+                    {saving ? 'Salvando…' : 'Salvar'}
+                  </button>
                   <button className="link" onClick={() => setEditId(null)}>Cancelar</button>
                 </div>
               </div>
@@ -378,8 +448,14 @@ function CategoriesSection({ cats, ctx }) {
               <div className="row space-between">
                 <span>{c.name}</span>
                 <div className="row gap-sm">
-                  <button className="link" onClick={() => { setEditId(c.id); setEditName(c.name); }}>editar</button>
-                  <button className="link danger" onClick={() => ctx.act(() => api.deleteCategory(c.id), 'Excluída')}>excluir</button>
+                  <button className="link-btn" onClick={() => { setEditId(c.id); setEditName(c.name); }}>editar</button>
+                  <button
+                    className="link-btn danger"
+                    onClick={() => ctx.act(() => api.deleteCategory(c.id), 'Excluída', `cat-${c.id}`)}
+                    disabled={ctx.pending === `cat-${c.id}`}
+                  >
+                    {ctx.pending === `cat-${c.id}` ? 'excluindo…' : 'excluir'}
+                  </button>
                 </div>
               </div>
             )}
