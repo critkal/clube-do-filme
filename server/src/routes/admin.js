@@ -1,4 +1,5 @@
 const express = require('express');
+const bcrypt = require('bcryptjs');
 const { db } = require('../db');
 const { requireAdmin } = require('../middleware/auth');
 const { destroyAsset } = require('../cloudinary');
@@ -87,6 +88,22 @@ router.post('/seasons/:id/complete', requireAdmin, async (req, res) => {
     sql: "UPDATE seasons SET status = 'completed' WHERE id = ?",
     args: [id],
   });
+  res.json({ ok: true });
+});
+
+// PUT /api/admin/members/:id/password { password }
+router.put('/members/:id/password', requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  const password = (req.body?.password || '').trim();
+  if (!password) return res.status(400).json({ error: 'password_required' });
+  if (password.length < 6) return res.status(400).json({ error: 'password_too_short' });
+
+  const member = await db.execute({ sql: 'SELECT is_admin FROM members WHERE id = ?', args: [id] });
+  if (!member.rows.length) return res.status(404).json({ error: 'not_found' });
+  if (!member.rows[0].is_admin) return res.status(400).json({ error: 'member_not_admin' });
+
+  const hash = await bcrypt.hash(password, 10);
+  await db.execute({ sql: 'UPDATE members SET password_hash = ? WHERE id = ?', args: [hash, id] });
   res.json({ ok: true });
 });
 

@@ -78,6 +78,9 @@ function MembersSection({ members, ctx }) {
   const [editName, setEditName] = useState('');
   const [editIsAdmin, setEditIsAdmin] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [pwdId, setPwdId] = useState(null);
+  const [pwdValue, setPwdValue] = useState('');
+  const [pwdSaving, setPwdSaving] = useState(false);
 
   const create = (e) => {
     e.preventDefault();
@@ -106,6 +109,21 @@ function MembersSection({ members, ctx }) {
   };
 
   const creating = ctx.pending === 'creating-member';
+
+  const savePassword = async () => {
+    if (!pwdValue.trim()) return;
+    ctx.setErr(''); ctx.setMsg('');
+    setPwdSaving(true);
+    try {
+      await api.setAdminPassword(pwdId, pwdValue.trim());
+      setPwdId(null); setPwdValue('');
+      ctx.setMsg('Senha definida');
+    } catch (e) {
+      ctx.setErr(e.message === 'password_too_short' ? 'Senha deve ter pelo menos 6 caracteres.' : e.message);
+    } finally {
+      setPwdSaving(false);
+    }
+  };
 
   return (
     <section className="card">
@@ -140,21 +158,43 @@ function MembersSection({ members, ctx }) {
                 </div>
               </div>
             ) : (
-              <div className="row space-between">
-                <span>
-                  {m.first_name}
-                  {m.is_admin && <span className="badge">admin</span>}
-                </span>
-                <div className="row gap-sm">
-                  <button className="link-btn" onClick={() => startEdit(m)}>editar</button>
-                  <button
-                    className="link-btn danger"
-                    onClick={() => ctx.act(() => api.deleteMember(m.id), 'Removido', `member-${m.id}`)}
-                    disabled={ctx.pending === `member-${m.id}`}
-                  >
-                    {ctx.pending === `member-${m.id}` ? 'removendo…' : 'remover'}
-                  </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <div className="row space-between">
+                  <span>
+                    {m.first_name}
+                    {m.is_admin && <span className="badge">admin</span>}
+                  </span>
+                  <div className="row gap-sm">
+                    <button className="link-btn" onClick={() => startEdit(m)}>editar</button>
+                    {m.is_admin && (
+                      <button className="link-btn" onClick={() => { setPwdId(pwdId === m.id ? null : m.id); setPwdValue(''); }}>
+                        {pwdId === m.id ? 'cancelar' : 'senha'}
+                      </button>
+                    )}
+                    <button
+                      className="link-btn danger"
+                      onClick={() => ctx.act(() => api.deleteMember(m.id), 'Removido', `member-${m.id}`)}
+                      disabled={ctx.pending === `member-${m.id}`}
+                    >
+                      {ctx.pending === `member-${m.id}` ? 'removendo…' : 'remover'}
+                    </button>
+                  </div>
                 </div>
+                {pwdId === m.id && (
+                  <div className="row gap-sm" style={{ paddingLeft: '0.25rem' }}>
+                    <input
+                      type="password"
+                      placeholder="Nova senha (mín. 6 caracteres)"
+                      value={pwdValue}
+                      onChange={(e) => setPwdValue(e.target.value)}
+                      style={{ flex: 1, fontSize: '0.85rem' }}
+                      autoFocus
+                    />
+                    <button onClick={savePassword} disabled={pwdValue.trim().length < 6 || pwdSaving} style={{ flexShrink: 0, fontSize: '0.85rem' }}>
+                      {pwdSaving ? 'Salvando…' : 'Definir'}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </li>

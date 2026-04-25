@@ -33,7 +33,8 @@ function safeJSON(text) {
 export const api = {
   // auth
   members: () => request('/api/members'),
-  login: (first_name) => request('/api/login', { method: 'POST', body: { first_name } }),
+  login: (first_name, password) => request('/api/login', { method: 'POST', body: { first_name, ...(password ? { password } : {}) } }),
+  setAdminPassword: (id, password) => request(`/api/admin/members/${id}/password`, { method: 'PUT', body: { password } }),
   logout: () => request('/api/logout', { method: 'POST' }),
   me: () => request('/api/me'),
 
