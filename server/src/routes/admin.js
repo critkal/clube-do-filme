@@ -45,9 +45,10 @@ router.delete('/members/:id', requireAdmin, async (req, res) => {
   res.json({ ok: true });
 });
 
-// POST /api/admin/seasons { name? } — auto-adds all current members, rounds = member count
+// POST /api/admin/seasons { name?, host_id? } — auto-adds all current members, rounds = member count
 router.post('/seasons', requireAdmin, async (req, res) => {
   const name = (req.body?.name || '').trim() || null;
+  const hostId = req.body?.host_id ? Number(req.body.host_id) : req.member.id;
 
   const active = await db.execute(
     "SELECT id FROM seasons WHERE status = 'active' LIMIT 1",
@@ -67,8 +68,8 @@ router.post('/seasons', requireAdmin, async (req, res) => {
   }
 
   const ins = await db.execute({
-    sql: "INSERT INTO seasons (name, rounds, status) VALUES (?, ?, 'active') RETURNING id",
-    args: [name, memberIds.length],
+    sql: "INSERT INTO seasons (name, rounds, status, host_id) VALUES (?, ?, 'active', ?) RETURNING id",
+    args: [name, memberIds.length, hostId],
   });
   const seasonId = Number(ins.rows[0].id);
 
@@ -81,11 +82,29 @@ router.post('/seasons', requireAdmin, async (req, res) => {
   res.status(201).json({ id: seasonId, rounds: memberIds.length });
 });
 
-// POST /api/admin/seasons/:id/complete — force-close
+// POST /api/admin/seasons/:id/complete — force-close (encerrada)
 router.post('/seasons/:id/complete', requireAdmin, async (req, res) => {
   const id = Number(req.params.id);
   await db.execute({
     sql: "UPDATE seasons SET status = 'completed' WHERE id = ?",
+    args: [id],
+  });
+  res.json({ ok: true });
+});
+
+// POST /api/admin/seasons/:id/present — host marks season as presented (notas públicas)
+router.post('/seasons/:id/present', requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  const season = await db.execute({
+    sql: 'SELECT status, host_id FROM seasons WHERE id = ?',
+    args: [id],
+  });
+  if (!season.rows.length) return res.status(404).json({ error: 'not_found' });
+  if (season.rows[0].status === 'active') {
+    return res.status(400).json({ error: 'season_still_active' });
+  }
+  await db.execute({
+    sql: "UPDATE seasons SET status = 'presented' WHERE id = ?",
     args: [id],
   });
   res.json({ ok: true });

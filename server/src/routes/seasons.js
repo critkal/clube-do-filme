@@ -5,9 +5,9 @@ const { requireAuth } = require('../middleware/auth');
 const router = express.Router();
 
 // GET /api/seasons
-router.get('/', requireAuth, async (_req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   const { rows } = await db.execute(
-    `SELECT s.id, s.name, s.rounds, s.status,
+    `SELECT s.id, s.name, s.rounds, s.status, s.host_id,
             (SELECT COUNT(*) FROM movies m WHERE m.season_id = s.id) AS movies_added
      FROM seasons s
      ORDER BY s.id DESC`,
@@ -18,6 +18,8 @@ router.get('/', requireAuth, async (_req, res) => {
       name: r.name,
       rounds: r.rounds,
       status: r.status,
+      host_id: r.host_id ? Number(r.host_id) : null,
+      is_host: r.host_id ? Number(r.host_id) === req.member.id : false,
       movies_added: Number(r.movies_added || 0),
     })),
   );
@@ -51,6 +53,15 @@ router.get('/:id/members', requireAuth, async (req, res) => {
 router.get('/:id/movies', requireAuth, async (req, res) => {
   const seasonId = Number(req.params.id);
   const memberId = req.member.id;
+
+  const seasonRow = await db.execute({
+    sql: 'SELECT status, host_id FROM seasons WHERE id = ?',
+    args: [seasonId],
+  });
+  if (!seasonRow.rows.length) return res.status(404).json({ error: 'season_not_found' });
+  const season = seasonRow.rows[0];
+  const ratingsVisible = season.status === 'presented' || Number(season.host_id) === memberId;
+
   const { rows } = await db.execute({
     sql: `SELECT m.id, m.title, m.year, m.director, m.poster_url, m.event_date,
                  m.round_number, m.presenter_id,
@@ -75,8 +86,8 @@ router.get('/:id/movies', requireAuth, async (req, res) => {
       round_number: r.round_number,
       presenter_id: r.presenter_id,
       presenter_name: r.presenter_name,
-      average_rating: r.average_rating == null ? null : Number(r.average_rating),
-      rating_count: Number(r.rating_count || 0),
+      average_rating: ratingsVisible && r.average_rating != null ? Number(r.average_rating) : null,
+      rating_count: ratingsVisible ? Number(r.rating_count || 0) : null,
       your_score: r.your_score == null ? null : Number(r.your_score),
     })),
   );

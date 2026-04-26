@@ -64,7 +64,7 @@ export default function Admin() {
       </div>
 
       {tab === 'members' && <MembersSection members={members} ctx={ctx} />}
-      {tab === 'seasons' && <SeasonsSection seasons={seasons} ctx={ctx} />}
+      {tab === 'seasons' && <SeasonsSection seasons={seasons} members={members} ctx={ctx} />}
       {tab === 'movies' && <MoviesSection movies={movies} seasons={seasons} ctx={ctx} />}
       {tab === 'categories' && <CategoriesSection cats={cats} ctx={ctx} />}
     </div>
@@ -204,8 +204,9 @@ function MembersSection({ members, ctx }) {
   );
 }
 
-function SeasonsSection({ seasons, ctx }) {
+function SeasonsSection({ seasons, members, ctx }) {
   const [name, setName] = useState('');
+  const [hostId, setHostId] = useState('');
   const [editId, setEditId] = useState(null);
   const [editName, setEditName] = useState('');
   const [orderSeasonId, setOrderSeasonId] = useState(null);
@@ -213,8 +214,12 @@ function SeasonsSection({ seasons, ctx }) {
 
   const create = (e) => {
     e.preventDefault();
-    ctx.act(() => api.createSeason(name.trim() || null), 'Temporada criada', 'creating-season');
-    setName('');
+    ctx.act(
+      () => api.createSeason(name.trim() || null, hostId ? Number(hostId) : undefined),
+      'Temporada criada',
+      'creating-season',
+    );
+    setName(''); setHostId('');
   };
 
   const saveEdit = async () => {
@@ -242,9 +247,17 @@ function SeasonsSection({ seasons, ctx }) {
   return (
     <section className="card">
       <h2>Temporadas</h2>
-      <form onSubmit={create} className="row gap" style={{ marginBottom: '0.75rem' }}>
-        <input placeholder="Nome (opcional)" value={name} onChange={(e) => setName(e.target.value)} />
-        <button type="submit" disabled={creating}>
+      <form onSubmit={create} className="stack" style={{ marginBottom: '0.75rem', gap: '0.5rem' }}>
+        <div className="row gap">
+          <input placeholder="Nome (opcional)" value={name} onChange={(e) => setName(e.target.value)} style={{ flex: 2 }} />
+          <select value={hostId} onChange={(e) => setHostId(e.target.value)} style={{ flex: 1, fontSize: '0.85rem' }}>
+            <option value="">Host (padrão: você)</option>
+            {members.map((m) => (
+              <option key={m.id} value={m.id}>{m.first_name}</option>
+            ))}
+          </select>
+        </div>
+        <button type="submit" disabled={creating} style={{ alignSelf: 'flex-start' }}>
           {creating ? 'Criando…' : 'Criar temporada'}
         </button>
       </form>
@@ -271,9 +284,12 @@ function SeasonsSection({ seasons, ctx }) {
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <span>{s.name || `Temporada #${s.id}`}</span>
                   <span className="muted" style={{ fontSize: '0.8rem' }}>{s.movies_added}/{s.rounds} filmes</span>
-                  <span className={`status-pill ${s.status === 'active' ? 'active' : 'closed'}`}>
-                    {s.status === 'active' ? 'ativa' : 'encerrada'}
-                  </span>
+                  <SeasonStatusPill status={s.status} />
+                  {s.host_id && (
+                    <span className="muted" style={{ fontSize: '0.75rem' }}>
+                      host: {members.find((m) => m.id === s.host_id)?.first_name || `#${s.host_id}`}
+                    </span>
+                  )}
                 </span>
                 <div className="row" style={{ gap: '0.35rem', flexWrap: 'wrap' }}>
                   <button className="link-btn" onClick={() => { setEditId(s.id); setEditName(s.name || ''); }}>
@@ -291,6 +307,15 @@ function SeasonsSection({ seasons, ctx }) {
                       disabled={ctx.pending === `complete-${s.id}`}
                     >
                       {ctx.pending === `complete-${s.id}` ? 'Encerrando…' : 'Encerrar'}
+                    </button>
+                  )}
+                  {s.status === 'completed' && (
+                    <button
+                      onClick={() => ctx.act(() => api.presentSeason(s.id), 'Apresentada!', `present-${s.id}`)}
+                      disabled={ctx.pending === `present-${s.id}`}
+                      style={{ background: 'var(--gradient)', color: '#fff', border: 'none', fontWeight: 600 }}
+                    >
+                      {ctx.pending === `present-${s.id}` ? 'Publicando…' : '🎬 Apresentar'}
                     </button>
                   )}
                   <button
@@ -370,6 +395,12 @@ function SeasonMemberOrder({ seasonId, ctx, onClose }) {
       </button>
     </div>
   );
+}
+
+function SeasonStatusPill({ status }) {
+  if (status === 'active') return <span className="status-pill active">ativa</span>;
+  if (status === 'presented') return <span className="status-pill presented">apresentada</span>;
+  return <span className="status-pill closed">encerrada</span>;
 }
 
 function MoviesSection({ movies, seasons, ctx }) {

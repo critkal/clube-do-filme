@@ -78,6 +78,7 @@ const MIGRATIONS = [
   'ALTER TABLE movies ADD COLUMN genre TEXT',
   'ALTER TABLE movies ADD COLUMN runtime INTEGER',
   'ALTER TABLE members ADD COLUMN password_hash TEXT',
+  'ALTER TABLE seasons ADD COLUMN host_id INTEGER REFERENCES members(id)',
 ];
 
 async function initSchema() {

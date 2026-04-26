@@ -123,7 +123,7 @@ export default function Movie() {
               {movie.event_date && ` · ${movie.event_date}`}
             </p>
 
-            {movie.rating_count > 0 && (
+            {movie.ratings_visible && movie.rating_count > 0 && (
               <div style={{ marginTop: '0.85rem', display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
                 <span style={{
                   fontFamily: "'Playfair Display', serif",
@@ -140,6 +140,11 @@ export default function Movie() {
                 </span>
               </div>
             )}
+            {!movie.ratings_visible && (
+              <p className="muted" style={{ margin: '0.75rem 0 0', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                🔒 Notas reveladas na apresentação final
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -153,13 +158,13 @@ export default function Movie() {
       {/* Rating */}
       <div className="card">
         <h3 style={{ marginBottom: '0.65rem' }}>Avaliação</h3>
-        {movie.rating_count === 0 && (
+        {movie.ratings_visible && movie.rating_count === 0 && (
           <p className="muted" style={{ margin: '0 0 0.65rem', fontSize: '0.875rem' }}>Ainda sem votos.</p>
         )}
         {!isPresenter ? (
           <>
             <p style={{ fontSize: '0.75rem', color: 'var(--muted)', margin: '0 0 0.4rem', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-              Sua nota
+              {movie.your_score ? 'Sua nota' : 'Avaliar'}
             </p>
             <StarRating value={movie.your_score || 0} onChange={rate} />
           </>

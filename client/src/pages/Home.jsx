@@ -45,8 +45,9 @@ function SeasonCard({ s, featured }) {
   const navigate = useNavigate();
   const title = s.name || `Temporada #${s.id}`;
   const isActive = s.status === 'active';
+  const isPresented = s.status === 'presented';
   const progress = s.rounds > 0 ? Math.round((s.movies_added / s.rounds) * 100) : 0;
-  const hasActions = s.status === 'completed';
+  const hasActions = s.status === 'completed' || isPresented;
 
   return (
     <div
@@ -59,8 +60,8 @@ function SeasonCard({ s, featured }) {
       <div className="season-card-header">
         <div className="season-card-title-row">
           <span className="season-card-title">{title}</span>
-          <span className={`status-pill ${isActive ? 'active' : 'closed'}`}>
-            {isActive ? 'em andamento' : 'encerrada'}
+          <span className={`status-pill ${isActive ? 'active' : isPresented ? 'presented' : 'closed'}`}>
+            {isActive ? 'em andamento' : isPresented ? 'apresentada' : 'encerrada'}
           </span>
         </div>
 

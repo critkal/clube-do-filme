@@ -108,18 +108,23 @@ seasonScopedRouter.post('/:seasonId/movies', requireAuth, upload.single('poster'
 // Mounted at /api/movies
 router.get('/:id', requireAuth, async (req, res) => {
   const movieId = Number(req.params.id);
+  const memberId = req.member.id;
   const m = await db.execute({
     sql: `SELECT m.*, mem.first_name AS presenter_name,
+                 s.status AS season_status, s.host_id AS season_host_id,
                  (SELECT AVG(score) FROM ratings r WHERE r.movie_id = m.id) AS average_rating,
                  (SELECT COUNT(*) FROM ratings r WHERE r.movie_id = m.id)   AS rating_count,
                  (SELECT score FROM ratings r WHERE r.movie_id = m.id AND r.member_id = ?) AS your_score
           FROM movies m
           LEFT JOIN members mem ON mem.id = m.presenter_id
+          LEFT JOIN seasons s ON s.id = m.season_id
           WHERE m.id = ?`,
-    args: [req.member.id, movieId],
+    args: [memberId, movieId],
   });
   if (!m.rows.length) return res.status(404).json({ error: 'not_found' });
   const row = m.rows[0];
+  const ratingsVisible = row.season_status === 'presented' || Number(row.season_host_id) === memberId;
+
   const cats = await db.execute({
     sql: `SELECT c.id, c.name
           FROM movie_categories mc
@@ -142,9 +147,12 @@ router.get('/:id', requireAuth, async (req, res) => {
     presenter_id: row.presenter_id,
     presenter_name: row.presenter_name,
     season_id: row.season_id,
+    season_status: row.season_status,
+    season_host_id: row.season_host_id ? Number(row.season_host_id) : null,
     round_number: row.round_number,
-    average_rating: row.average_rating == null ? null : Number(row.average_rating),
-    rating_count: Number(row.rating_count || 0),
+    ratings_visible: ratingsVisible,
+    average_rating: ratingsVisible && row.average_rating != null ? Number(row.average_rating) : null,
+    rating_count: ratingsVisible ? Number(row.rating_count || 0) : null,
     your_score: row.your_score == null ? null : Number(row.your_score),
     categories: cats.rows.map((c) => ({ id: c.id, name: c.name })),
   });

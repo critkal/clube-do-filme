@@ -198,6 +198,18 @@ a:hover { color: var(--purple); }
   color: var(--muted);
   border: 1px solid var(--border-bright);
 }
+.status-pill.presented {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--amber);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+.status-pill.presented::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--amber);
+}
 
 /* ── CARDS ───────────────────────────────────────────── */
 .card {
