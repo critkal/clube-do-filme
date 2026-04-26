@@ -82,6 +82,9 @@ export default function Season() {
                   <h3>{m.title}{m.year && <span className="muted" style={{ fontWeight: 400 }}> ({m.year})</span>}</h3>
                   <p className="muted" style={{ margin: '0.1rem 0 0.35rem' }}>
                     Rodada {m.round_number} · {m.presenter_name}
+                    {m.created_at && (
+                      <span> · {new Date(m.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                    )}
                   </p>
                   {m.rating_count > 0 ? (
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.85rem' }}>

@@ -63,7 +63,7 @@ router.get('/:id/movies', requireAuth, async (req, res) => {
   const ratingsVisible = season.status === 'presented' || Number(season.host_id) === memberId;
 
   const { rows } = await db.execute({
-    sql: `SELECT m.id, m.title, m.year, m.director, m.poster_url, m.event_date,
+    sql: `SELECT m.id, m.title, m.year, m.director, m.poster_url, m.event_date, m.created_at,
                  m.round_number, m.presenter_id,
                  mem.first_name AS presenter_name,
                  (SELECT AVG(score) FROM ratings r WHERE r.movie_id = m.id)  AS average_rating,
@@ -83,6 +83,7 @@ router.get('/:id/movies', requireAuth, async (req, res) => {
       director: r.director,
       poster_url: r.poster_url,
       event_date: r.event_date,
+      created_at: r.created_at || null,
       round_number: r.round_number,
       presenter_id: r.presenter_id,
       presenter_name: r.presenter_name,
