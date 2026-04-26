@@ -57,7 +57,12 @@ function sessionCookieOptions() {
 
 function sessionMiddleware() {
   return async (req, res, next) => {
-    const sid = req.cookies?.[COOKIE_NAME];
+    // Cookie first (desktop), then Authorization header (Safari iOS / cross-origin)
+    let sid = req.cookies?.[COOKIE_NAME];
+    if (!sid) {
+      const auth = req.headers.authorization || '';
+      if (auth.startsWith('Bearer ')) sid = auth.slice(7).trim();
+    }
     const sess = await getSession(sid);
     req.session = sess;
     req.sid = sid;
@@ -66,6 +71,7 @@ function sessionMiddleware() {
       res.cookie(COOKIE_NAME, newSid, sessionCookieOptions());
       req.session = { memberId };
       req.sid = newSid;
+      return newSid;
     };
     res.clearSessionCookie = async () => {
       await destroySession(sid);

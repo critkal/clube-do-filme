@@ -37,8 +37,8 @@ router.post('/login', async (req, res) => {
     if (!ok) return res.status(401).json({ error: 'invalid_password' });
   }
 
-  await res.setSession(member.id);
-  res.json({ ok: true });
+  const token = await res.setSession(member.id);
+  res.json({ ok: true, token });
 });
 
 // POST /api/logout

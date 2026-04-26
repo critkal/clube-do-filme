@@ -2,12 +2,19 @@ const API_URL =
   import.meta.env.VITE_API_URL ||
   (import.meta.env.DEV ? 'http://localhost:4000' : 'https://clube-do-filme.onrender.com');
 
+const TOKEN_KEY = 'cdf_token';
+const getToken = () => localStorage.getItem(TOKEN_KEY);
+const setToken = (t) => { if (t) localStorage.setItem(TOKEN_KEY, t); };
+const clearToken = () => localStorage.removeItem(TOKEN_KEY);
+
 async function request(path, { method = 'GET', body, isForm = false } = {}) {
   const opts = {
     method,
     credentials: 'include',
     headers: {},
   };
+  const token = getToken();
+  if (token) opts.headers['Authorization'] = `Bearer ${token}`;
   if (body !== undefined && !isForm) {
     opts.headers['Content-Type'] = 'application/json';
     opts.body = JSON.stringify(body);
@@ -33,10 +40,18 @@ function safeJSON(text) {
 export const api = {
   // auth
   members: () => request('/api/members'),
-  login: (first_name, password) => request('/api/login', { method: 'POST', body: { first_name, ...(password ? { password } : {}) } }),
-  setAdminPassword: (id, password) => request(`/api/admin/members/${id}/password`, { method: 'PUT', body: { password } }),
-  logout: () => request('/api/logout', { method: 'POST' }),
+  login: async (first_name, password) => {
+    const res = await request('/api/login', { method: 'POST', body: { first_name, ...(password ? { password } : {}) } });
+    setToken(res?.token);
+    return res;
+  },
+  logout: async () => {
+    const res = await request('/api/logout', { method: 'POST' });
+    clearToken();
+    return res;
+  },
   me: () => request('/api/me'),
+  setAdminPassword: (id, password) => request(`/api/admin/members/${id}/password`, { method: 'PUT', body: { password } }),
 
   // seasons
   seasons: () => request('/api/seasons'),
