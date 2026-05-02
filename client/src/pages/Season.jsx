@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../App.jsx';
 import MoviePoster from '../components/MoviePoster.jsx';
@@ -7,6 +7,7 @@ import MoviePoster from '../components/MoviePoster.jsx';
 export default function Season() {
   const { id } = useParams();
   const { me } = useAuth();
+  const navigate = useNavigate();
   const [seasons, setSeasons] = useState([]);
   const [movies, setMovies] = useState([]);
   const [members, setMembers] = useState([]);
@@ -34,9 +35,14 @@ export default function Season() {
   const presenterAlreadyAdded = movies.some((m) => m.presenter_id === me.id);
   const isActive = season.status === 'active';
 
+  const sortedMovies = [...movies].sort((a, b) => {
+    if (a.created_at && b.created_at) return new Date(b.created_at) - new Date(a.created_at);
+    return b.round_number - a.round_number;
+  });
+
   return (
     <div className="stack">
-      <Link to="/" className="back-link">← Temporadas</Link>
+      <button type="button" className="link back-link" onClick={() => navigate(-1)}>← Temporadas</button>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', flexWrap: 'wrap' }}>
         <div>
@@ -56,8 +62,6 @@ export default function Season() {
         )}
       </div>
 
-      {members.length > 0 && <MemberQueue members={members} />}
-
       {isActive && !presenterAlreadyAdded && (
         <>
           <button className="btn primary" onClick={() => setShowForm((v) => !v)}>
@@ -70,109 +74,151 @@ export default function Season() {
         <p className="muted" style={{ fontSize: '0.85rem' }}>Você já adicionou seu filme nesta temporada.</p>
       )}
 
-      {movies.length === 0 ? (
+      {sortedMovies.length === 0 ? (
         <p className="muted">Nenhum filme adicionado ainda.</p>
       ) : (
-        <ul className="grid">
-          {movies.map((m) => (
-            <li key={m.id} className="card movie-card">
-              <Link to={`/movies/${m.id}`} className="movie-link">
-                <MoviePoster src={m.poster_url} alt={m.title} size="sm" />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <h3>{m.title}{m.year && <span className="muted" style={{ fontWeight: 400 }}> ({m.year})</span>}</h3>
-                  <p className="muted" style={{ margin: '0.1rem 0 0.35rem' }}>
-                    Rodada {m.round_number} · {m.presenter_name}
-                    {m.created_at && (
-                      <span> · {new Date(m.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+        <>
+          <div className="section-header">
+            <h2>Filmes</h2>
+            <span className="muted" style={{ fontSize: '0.72rem', marginLeft: 'auto' }}>mais recentes primeiro</span>
+          </div>
+          <ul className="grid">
+            {sortedMovies.map((m) => (
+              <li key={m.id} className="card movie-card">
+                <Link to={`/movies/${m.id}`} className="movie-link">
+                  <MoviePoster src={m.poster_url} alt={m.title} size="sm" />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h3>{m.title}{m.year && <span className="muted" style={{ fontWeight: 400 }}> ({m.year})</span>}</h3>
+                    <p className="muted" style={{ margin: '0.1rem 0 0.35rem' }}>
+                      Rodada {m.round_number} · {m.presenter_name}
+                      {m.created_at && (
+                        <span> · {new Date(m.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                      )}
+                    </p>
+                    {m.rating_count > 0 ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.85rem' }}>
+                        <span style={{ color: 'var(--amber)', fontWeight: 600 }}>★ {m.average_rating.toFixed(1)}</span>
+                        <span className="muted">· {m.rating_count} nota{m.rating_count > 1 ? 's' : ''}</span>
+                      </span>
+                    ) : (
+                      <span className="muted" style={{ fontSize: '0.82rem' }}>sem notas ainda</span>
                     )}
-                  </p>
-                  {m.rating_count > 0 ? (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.85rem' }}>
-                      <span style={{ color: 'var(--amber)', fontWeight: 600 }}>★ {m.average_rating.toFixed(1)}</span>
-                      <span className="muted">· {m.rating_count} nota{m.rating_count > 1 ? 's' : ''}</span>
-                    </span>
-                  ) : (
-                    <span className="muted" style={{ fontSize: '0.82rem' }}>sem notas ainda</span>
-                  )}
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
+
+      {members.length > 0 && <CollapsibleQueue members={members} />}
     </div>
   );
 }
 
-function MemberQueue({ members }) {
+function CollapsibleQueue({ members }) {
+  const [open, setOpen] = useState(false);
   const nextIndex = members.findIndex((m) => !m.hasPresented);
+  const nextMember = nextIndex !== -1 ? members[nextIndex] : null;
 
   return (
     <section className="card">
-      <h3 style={{ marginBottom: '0.75rem', fontSize: '0.95rem', fontWeight: 600 }}>Fila de apresentações</h3>
-      <ol style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-        {members.map((m, i) => {
-          const isNext = i === nextIndex;
-          return (
-            <li
-              key={m.memberId}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-                padding: '0.45rem 0',
-                borderBottom: i < members.length - 1 ? '1px solid var(--border)' : 'none',
-                opacity: m.hasPresented ? 0.45 : 1,
-              }}
-            >
-              <span style={{ color: 'var(--muted)', fontSize: '0.82rem', minWidth: '1.4rem', fontVariantNumeric: 'tabular-nums' }}>
-                {m.roundOrder}.
-              </span>
-              <span style={{ flex: 1, fontSize: '0.92rem', textDecoration: m.hasPresented ? 'line-through' : 'none' }}>
-                {m.name}
-                {m.hasPresented && m.movieTitle && (
-                  <span className="muted" style={{ fontSize: '0.78rem', textDecoration: 'none' }}>
-                    {' '}· {m.movieTitle}
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        style={{
+          display: 'flex',
+          width: '100%',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          background: 'transparent',
+          border: 'none',
+          padding: 0,
+          cursor: 'pointer',
+          color: 'var(--text)',
+          minHeight: 'auto',
+          gap: '0.5rem',
+        }}
+      >
+        <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600 }}>Fila de apresentações</h3>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+          {!open && nextMember && (
+            <span style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>
+              a seguir: <strong style={{ color: 'var(--text)', fontWeight: 500 }}>{nextMember.name}</strong>
+            </span>
+          )}
+          <span style={{
+            color: 'var(--muted)',
+            fontSize: '0.85rem',
+            display: 'inline-block',
+            transition: 'transform 0.2s',
+            transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+          }}>▾</span>
+        </span>
+      </button>
+
+      {open && (
+        <ol style={{ listStyle: 'none', padding: 0, margin: '0.75rem 0 0' }}>
+          {members.map((m, i) => {
+            const isNext = i === nextIndex;
+            return (
+              <li
+                key={m.memberId}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '0.45rem 0',
+                  borderBottom: i < members.length - 1 ? '1px solid var(--border)' : 'none',
+                  opacity: m.hasPresented ? 0.45 : 1,
+                }}
+              >
+                <span style={{ color: 'var(--muted)', fontSize: '0.82rem', minWidth: '1.4rem', fontVariantNumeric: 'tabular-nums' }}>
+                  {m.roundOrder}.
+                </span>
+                <span style={{ flex: 1, fontSize: '0.92rem', textDecoration: m.hasPresented ? 'line-through' : 'none' }}>
+                  {m.name}
+                  {m.hasPresented && m.movieTitle && (
+                    <span className="muted" style={{ fontSize: '0.78rem', textDecoration: 'none' }}>
+                      {' '}· {m.movieTitle}
+                    </span>
+                  )}
+                </span>
+                {isNext && (
+                  <span style={{
+                    fontSize: '0.7rem',
+                    fontWeight: 700,
+                    padding: '0.15rem 0.55rem',
+                    borderRadius: '20px',
+                    background: 'var(--gradient)',
+                    color: '#fff',
+                    letterSpacing: '0.02em',
+                  }}>
+                    próximo
                   </span>
                 )}
-              </span>
-              {isNext && (
-                <span style={{
-                  fontSize: '0.7rem',
-                  fontWeight: 700,
-                  padding: '0.15rem 0.55rem',
-                  borderRadius: '20px',
-                  background: 'var(--gradient)',
-                  color: '#fff',
-                  letterSpacing: '0.02em',
-                }}>
-                  próximo
-                </span>
-              )}
-              {m.hasPresented && (
-                <span style={{ color: 'var(--green, #4ade80)', fontSize: '0.85rem' }}>✓</span>
-              )}
-            </li>
-          );
-        })}
-      </ol>
+                {m.hasPresented && (
+                  <span style={{ color: 'var(--green, #4ade80)', fontSize: '0.85rem' }}>✓</span>
+                )}
+              </li>
+            );
+          })}
+        </ol>
+      )}
     </section>
   );
 }
 
 function AddMovieForm({ seasonId, onDone }) {
-  // Search state
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [searching, setSearching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // Selection / mode
-  const [selected, setSelected] = useState(null); // full TMDB details
+  const [selected, setSelected] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [manual, setManual] = useState(false);
 
-  // Form fields (populated from TMDB or typed manually)
   const [title, setTitle] = useState('');
   const [year, setYear] = useState('');
   const [director, setDirector] = useState('');
@@ -185,7 +231,6 @@ function AddMovieForm({ seasonId, onDone }) {
   const [busy, setBusy] = useState(false);
   const searchRef = useRef(null);
 
-  // Debounced TMDB search
   useEffect(() => {
     if (manual || !query || query.length < 2) { setSuggestions([]); return; }
     const t = setTimeout(async () => {
@@ -268,7 +313,6 @@ function AddMovieForm({ seasonId, onDone }) {
 
   return (
     <div className="card stack">
-      {/* Search or reset */}
       {!showForm && (
         <div style={{ position: 'relative' }}>
           <label>Buscar filme
@@ -319,7 +363,6 @@ function AddMovieForm({ seasonId, onDone }) {
         </div>
       )}
 
-      {/* Selected movie preview or manual header */}
       {hasSelection && (
         <div className="tmdb-selected">
           {selected.poster_thumb && (
@@ -342,7 +385,6 @@ function AddMovieForm({ seasonId, onDone }) {
         </div>
       )}
 
-      {/* Form fields */}
       {showForm && (
         <form onSubmit={submit} className="stack" style={{ gap: '0.75rem' }}>
           <label>Título
