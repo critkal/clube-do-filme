@@ -71,7 +71,12 @@ export const api = {
 
   // movies
   movie: (id) => request(`/api/movies/${id}`),
-  rate: (id, score) => request(`/api/movies/${id}/rate`, { method: 'POST', body: { score } }),
+  rate: (id, score, comment = null) => request(`/api/movies/${id}/rate`, {
+    method: 'POST',
+    body: { score, ...(comment != null ? { comment } : {}) },
+  }),
+  addReferral: (movieId, data) => request(`/api/movies/${movieId}/referrals`, { method: 'POST', body: data }),
+  removeReferral: (movieId, catId) => request(`/api/movies/${movieId}/referrals/${catId}`, { method: 'DELETE' }),
   updateMovie: (id, formData) =>
     request(`/api/movies/${id}`, { method: 'PUT', body: formData, isForm: true }),
   addMovieCategory: (movieId, categoryId) =>

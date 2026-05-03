@@ -112,18 +112,20 @@ router.get('/:id', requireAuth, async (req, res) => {
   const m = await db.execute({
     sql: `SELECT m.*, mem.first_name AS presenter_name,
                  s.status AS season_status, s.host_id AS season_host_id,
-                 (SELECT AVG(score) FROM ratings r WHERE r.movie_id = m.id) AS average_rating,
-                 (SELECT COUNT(*) FROM ratings r WHERE r.movie_id = m.id)   AS rating_count,
-                 (SELECT score FROM ratings r WHERE r.movie_id = m.id AND r.member_id = ?) AS your_score
+                 (SELECT AVG(score) FROM ratings r WHERE r.movie_id = m.id)    AS average_rating,
+                 (SELECT COUNT(*) FROM ratings r WHERE r.movie_id = m.id)      AS rating_count,
+                 (SELECT score   FROM ratings r WHERE r.movie_id = m.id AND r.member_id = ?) AS your_score,
+                 (SELECT comment FROM ratings r WHERE r.movie_id = m.id AND r.member_id = ?) AS your_comment
           FROM movies m
           LEFT JOIN members mem ON mem.id = m.presenter_id
           LEFT JOIN seasons s ON s.id = m.season_id
           WHERE m.id = ?`,
-    args: [memberId, movieId],
+    args: [memberId, memberId, movieId],
   });
   if (!m.rows.length) return res.status(404).json({ error: 'not_found' });
   const row = m.rows[0];
-  const ratingsVisible = row.season_status === 'presented' || Number(row.season_host_id) === memberId;
+  const isHost = Number(row.season_host_id) === memberId;
+  const ratingsVisible = row.season_status === 'presented' || isHost;
 
   const cats = await db.execute({
     sql: `SELECT c.id, c.name
@@ -133,7 +135,37 @@ router.get('/:id', requireAuth, async (req, res) => {
           ORDER BY c.name COLLATE NOCASE`,
     args: [movieId],
   });
-  res.json({
+
+  const refs = await db.execute({
+    sql: `SELECT ref.category_id, c.name AS category_name,
+                 COUNT(*) AS count,
+                 MAX(CASE WHEN ref.member_id = ? THEN 1 ELSE 0 END) AS you_referred
+          FROM referrals ref
+          JOIN categories c ON c.id = ref.category_id
+          WHERE ref.movie_id = ?
+          GROUP BY ref.category_id
+          ORDER BY count DESC, c.name COLLATE NOCASE`,
+    args: [memberId, movieId],
+  });
+
+  let voteComments = null;
+  if (isHost) {
+    const vc = await db.execute({
+      sql: `SELECT mem.first_name AS voter_name, r.score, r.comment
+            FROM ratings r
+            JOIN members mem ON mem.id = r.member_id
+            WHERE r.movie_id = ? AND r.comment IS NOT NULL AND r.comment != ''
+            ORDER BY mem.first_name COLLATE NOCASE`,
+      args: [movieId],
+    });
+    voteComments = vc.rows.map((r) => ({
+      voter_name: r.voter_name,
+      score: Number(r.score),
+      comment: r.comment,
+    }));
+  }
+
+  const response = {
     id: row.id,
     title: row.title,
     year: row.year,
@@ -154,8 +186,19 @@ router.get('/:id', requireAuth, async (req, res) => {
     average_rating: ratingsVisible && row.average_rating != null ? Number(row.average_rating) : null,
     rating_count: ratingsVisible ? Number(row.rating_count || 0) : null,
     your_score: row.your_score == null ? null : Number(row.your_score),
+    your_comment: row.your_comment || null,
     categories: cats.rows.map((c) => ({ id: c.id, name: c.name })),
-  });
+    referrals: refs.rows.map((r) => ({
+      category_id: Number(r.category_id),
+      category_name: r.category_name,
+      count: Number(r.count),
+      you_referred: Boolean(r.you_referred),
+    })),
+  };
+  if (voteComments !== null) {
+    response.vote_comments = voteComments;
+  }
+  res.json(response);
 });
 
 router.put('/:id', requireAuth, upload.single('poster'), async (req, res) => {
@@ -199,9 +242,11 @@ router.put('/:id', requireAuth, upload.single('poster'), async (req, res) => {
 router.post('/:id/rate', requireAuth, async (req, res) => {
   const movieId = Number(req.params.id);
   const score = Number(req.body?.score);
-  if (!Number.isInteger(score) || score < 1 || score > 5) {
+  if (!Number.isInteger(score) || score < 1 || score > 10) {
     return res.status(400).json({ error: 'invalid_score' });
   }
+  const comment = (req.body?.comment || '').trim() || null;
+
   const m = await db.execute({
     sql: 'SELECT presenter_id FROM movies WHERE id = ?',
     args: [movieId],
@@ -211,10 +256,10 @@ router.post('/:id/rate', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'cannot_rate_own_movie' });
   }
   await db.execute({
-    sql: `INSERT INTO ratings (movie_id, member_id, score)
-          VALUES (?, ?, ?)
-          ON CONFLICT(movie_id, member_id) DO UPDATE SET score = excluded.score`,
-    args: [movieId, req.member.id, score],
+    sql: `INSERT INTO ratings (movie_id, member_id, score, comment)
+          VALUES (?, ?, ?, ?)
+          ON CONFLICT(movie_id, member_id) DO UPDATE SET score = excluded.score, comment = excluded.comment`,
+    args: [movieId, req.member.id, score, comment],
   });
   res.json({ ok: true });
 });
@@ -236,6 +281,67 @@ router.get('/:id/rating', requireAuth, async (req, res) => {
   });
 });
 
+// Referrals — anyone can refer a movie to a category
+router.post('/:id/referrals', requireAuth, async (req, res) => {
+  const movieId = Number(req.params.id);
+  const memberId = req.member.id;
+
+  const movieCheck = await db.execute({ sql: 'SELECT 1 FROM movies WHERE id = ?', args: [movieId] });
+  if (!movieCheck.rows.length) return res.status(404).json({ error: 'movie_not_found' });
+
+  let categoryId = req.body?.category_id ? Number(req.body.category_id) : null;
+  const categoryName = (req.body?.category_name || '').trim();
+
+  if (!categoryId && !categoryName) {
+    return res.status(400).json({ error: 'category_id_or_name_required' });
+  }
+
+  if (!categoryId && categoryName) {
+    try {
+      const c = await db.execute({
+        sql: 'INSERT INTO categories (name) VALUES (?) RETURNING id',
+        args: [categoryName],
+      });
+      categoryId = Number(c.rows[0].id);
+    } catch (err) {
+      if (String(err.message || '').includes('UNIQUE')) {
+        const existing = await db.execute({
+          sql: 'SELECT id FROM categories WHERE name = ?',
+          args: [categoryName],
+        });
+        if (!existing.rows.length) throw err;
+        categoryId = Number(existing.rows[0].id);
+      } else {
+        throw err;
+      }
+    }
+  }
+
+  try {
+    await db.execute({
+      sql: 'INSERT INTO referrals (movie_id, member_id, category_id) VALUES (?, ?, ?)',
+      args: [movieId, memberId, categoryId],
+    });
+    res.status(201).json({ ok: true, category_id: categoryId });
+  } catch (err) {
+    if (String(err.message || '').includes('UNIQUE')) {
+      return res.json({ ok: true, category_id: categoryId });
+    }
+    throw err;
+  }
+});
+
+router.delete('/:id/referrals/:catId', requireAuth, async (req, res) => {
+  const movieId = Number(req.params.id);
+  const catId = Number(req.params.catId);
+  await db.execute({
+    sql: 'DELETE FROM referrals WHERE movie_id = ? AND member_id = ? AND category_id = ?',
+    args: [movieId, req.member.id, catId],
+  });
+  res.json({ ok: true });
+});
+
+// Kept for admin/backward-compat use
 router.post('/:id/categories', requireAuth, async (req, res) => {
   const movieId = Number(req.params.id);
   const catId = Number(req.body?.category_id);

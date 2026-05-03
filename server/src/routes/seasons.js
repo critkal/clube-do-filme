@@ -94,7 +94,8 @@ router.get('/:id/movies', requireAuth, async (req, res) => {
   );
 });
 
-// GET /api/seasons/:id/final-voting — categories with nominees (season must be completed)
+// GET /api/seasons/:id/final-voting
+// Nominees = movies with referrals in this season (primary) + movie_categories (backward compat)
 router.get('/:id/final-voting', requireAuth, async (req, res) => {
   const seasonId = Number(req.params.id);
   const season = await db.execute({
@@ -106,15 +107,34 @@ router.get('/:id/final-voting', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'season_not_completed' });
   }
 
-  const cats = await db.execute('SELECT id, name FROM categories ORDER BY name COLLATE NOCASE');
-  const nominations = await db.execute({
-    sql: `SELECT mc.category_id, m.id AS movie_id, m.title, m.poster_url,
-                 (SELECT AVG(score) FROM ratings r WHERE r.movie_id = m.id) AS average_rating
+  // Referral-based nominees (democratic nominations)
+  const referralNoms = await db.execute({
+    sql: `SELECT ref.category_id, c.name AS category_name,
+                 m.id AS movie_id, m.title, m.poster_url,
+                 (SELECT AVG(score) FROM ratings r WHERE r.movie_id = m.id) AS average_rating,
+                 COUNT(ref.id) AS referral_count
+          FROM referrals ref
+          JOIN movies m ON m.id = ref.movie_id
+          JOIN categories c ON c.id = ref.category_id
+          WHERE m.season_id = ?
+          GROUP BY ref.category_id, m.id
+          ORDER BY ref.category_id, referral_count DESC`,
+    args: [seasonId],
+  });
+
+  // movie_categories nominees (backward compat with manually assigned categories)
+  const catNoms = await db.execute({
+    sql: `SELECT mc.category_id, c.name AS category_name,
+                 m.id AS movie_id, m.title, m.poster_url,
+                 (SELECT AVG(score) FROM ratings r WHERE r.movie_id = m.id) AS average_rating,
+                 0 AS referral_count
           FROM movie_categories mc
           JOIN movies m ON m.id = mc.movie_id
+          JOIN categories c ON c.id = mc.category_id
           WHERE m.season_id = ?`,
     args: [seasonId],
   });
+
   const myVotes = await db.execute({
     sql: 'SELECT category_id, movie_id FROM final_votes WHERE season_id = ? AND voter_id = ?',
     args: [seasonId, req.member.id],
@@ -123,25 +143,40 @@ router.get('/:id/final-voting', requireAuth, async (req, res) => {
     myVotes.rows.map((v) => [Number(v.category_id), Number(v.movie_id)]),
   );
 
-  const nomsByCat = {};
-  for (const r of nominations.rows) {
-    const key = Number(r.category_id);
-    if (!nomsByCat[key]) nomsByCat[key] = [];
-    nomsByCat[key].push({
-      id: Number(r.movie_id),
-      title: r.title,
-      poster_url: r.poster_url,
-      average_rating: r.average_rating == null ? null : Number(r.average_rating),
-    });
-  }
+  // Merge nominees, deduplicating by (category_id, movie_id), preferring referral counts
+  const catMap = {};
+  const addNominee = (row, isReferral) => {
+    const catId = Number(row.category_id);
+    if (!catMap[catId]) {
+      catMap[catId] = { id: catId, name: row.category_name, nominees: new Map() };
+    }
+    const movieId = Number(row.movie_id);
+    if (!catMap[catId].nominees.has(movieId)) {
+      catMap[catId].nominees.set(movieId, {
+        id: movieId,
+        title: row.title,
+        poster_url: row.poster_url,
+        average_rating: row.average_rating == null ? null : Number(row.average_rating),
+        referral_count: Number(row.referral_count || 0),
+      });
+    } else if (isReferral) {
+      const existing = catMap[catId].nominees.get(movieId);
+      existing.referral_count = Math.max(existing.referral_count, Number(row.referral_count || 0));
+    }
+  };
+
+  for (const r of referralNoms.rows) addNominee(r, true);
+  for (const r of catNoms.rows) addNominee(r, false);
 
   res.json(
-    cats.rows.map((c) => ({
-      id: c.id,
-      name: c.name,
-      nominees: nomsByCat[Number(c.id)] || [],
-      your_vote_movie_id: votedByCat[Number(c.id)] ?? null,
-    })),
+    Object.values(catMap)
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((cat) => ({
+        id: cat.id,
+        name: cat.name,
+        nominees: [...cat.nominees.values()].sort((a, b) => b.referral_count - a.referral_count),
+        your_vote_movie_id: votedByCat[cat.id] ?? null,
+      })),
   );
 });
 
@@ -161,12 +196,15 @@ router.post('/:id/final-votes', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'season_not_completed' });
   }
 
-  // Movie must be nominated in this category and belong to this season
+  // Movie must be nominated in this category (via referrals or movie_categories) and belong to this season
   const check = await db.execute({
-    sql: `SELECT 1 FROM movie_categories mc
-          JOIN movies m ON m.id = mc.movie_id
-          WHERE mc.movie_id = ? AND mc.category_id = ? AND m.season_id = ?`,
-    args: [movieId, categoryId, seasonId],
+    sql: `SELECT 1 FROM movies m
+          WHERE m.id = ? AND m.season_id = ?
+          AND (
+            EXISTS (SELECT 1 FROM referrals r WHERE r.movie_id = m.id AND r.category_id = ?)
+            OR EXISTS (SELECT 1 FROM movie_categories mc WHERE mc.movie_id = m.id AND mc.category_id = ?)
+          )`,
+    args: [movieId, seasonId, categoryId, categoryId],
   });
   if (!check.rows.length) return res.status(400).json({ error: 'invalid_nominee' });
 

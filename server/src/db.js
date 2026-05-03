@@ -45,7 +45,8 @@ const SCHEMA_STATEMENTS = [
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     movie_id INTEGER REFERENCES movies(id),
     member_id INTEGER REFERENCES members(id),
-    score INTEGER CHECK(score BETWEEN 1 AND 5),
+    score INTEGER CHECK(score BETWEEN 1 AND 10),
+    comment TEXT,
     UNIQUE(movie_id, member_id)
   )`,
   `CREATE TABLE IF NOT EXISTS categories (
@@ -56,6 +57,13 @@ const SCHEMA_STATEMENTS = [
     movie_id INTEGER REFERENCES movies(id),
     category_id INTEGER REFERENCES categories(id),
     PRIMARY KEY (movie_id, category_id)
+  )`,
+  `CREATE TABLE IF NOT EXISTS referrals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    movie_id INTEGER REFERENCES movies(id) ON DELETE CASCADE,
+    member_id INTEGER REFERENCES members(id),
+    category_id INTEGER REFERENCES categories(id) ON DELETE CASCADE,
+    UNIQUE(movie_id, member_id, category_id)
   )`,
   `CREATE TABLE IF NOT EXISTS final_votes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -81,6 +89,34 @@ const MIGRATIONS = [
   'ALTER TABLE seasons ADD COLUMN host_id INTEGER REFERENCES members(id)',
 ];
 
+// Recreates the ratings table with 1-10 constraint and comment column if needed.
+async function migrateRatings() {
+  const info = await db.execute('PRAGMA table_info(ratings)');
+  const cols = info.rows.map((r) => r.name);
+  if (cols.includes('comment')) return;
+
+  await db.execute(`CREATE TABLE IF NOT EXISTS ratings_v2 (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    movie_id INTEGER REFERENCES movies(id),
+    member_id INTEGER REFERENCES members(id),
+    score INTEGER CHECK(score BETWEEN 1 AND 10),
+    comment TEXT,
+    UNIQUE(movie_id, member_id)
+  )`);
+
+  const existing = await db.execute(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name='ratings'",
+  );
+  if (existing.rows.length) {
+    await db.execute(
+      `INSERT OR IGNORE INTO ratings_v2 (id, movie_id, member_id, score)
+       SELECT id, movie_id, member_id, score FROM ratings`,
+    );
+    await db.execute('DROP TABLE ratings');
+  }
+  await db.execute('ALTER TABLE ratings_v2 RENAME TO ratings');
+}
+
 async function initSchema() {
   for (const stmt of SCHEMA_STATEMENTS) {
     await db.execute(stmt);
@@ -88,6 +124,7 @@ async function initSchema() {
   for (const sql of MIGRATIONS) {
     try { await db.execute(sql); } catch { /* column already exists */ }
   }
+  await migrateRatings();
 }
 
 module.exports = { db, initSchema };

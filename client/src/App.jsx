@@ -6,6 +6,7 @@ import Login from './pages/Login.jsx';
 import Home from './pages/Home.jsx';
 import Season from './pages/Season.jsx';
 import Movie from './pages/Movie.jsx';
+import Vote from './pages/Vote.jsx';
 import Admin from './pages/Admin.jsx';
 import FinalVoting from './pages/FinalVoting.jsx';
 import Results from './pages/Results.jsx';
@@ -48,6 +49,7 @@ export default function App() {
           <Route path="/seasons/:id/final-voting" element={<Protected me={me}><FinalVoting /></Protected>} />
           <Route path="/seasons/:id/results" element={<Protected me={me}><Results /></Protected>} />
           <Route path="/movies/:id" element={<Protected me={me}><Movie /></Protected>} />
+          <Route path="/movies/:id/vote" element={<Protected me={me}><Vote /></Protected>} />
           <Route path="/admin" element={<Protected me={me} admin><Admin /></Protected>} />
           <Route path="*" element={<NotFound />} />
         </Routes>

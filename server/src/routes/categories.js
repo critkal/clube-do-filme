@@ -33,7 +33,7 @@ router.post('/', requireAuth, async (req, res) => {
 // DELETE /api/categories/:id — admin only
 router.delete('/:id', requireAdmin, async (req, res) => {
   const id = Number(req.params.id);
-  // Cascade within app: drop links + votes for this category first
+  await db.execute({ sql: 'DELETE FROM referrals WHERE category_id = ?', args: [id] });
   await db.execute({ sql: 'DELETE FROM movie_categories WHERE category_id = ?', args: [id] });
   await db.execute({ sql: 'DELETE FROM final_votes WHERE category_id = ?', args: [id] });
   await db.execute({ sql: 'DELETE FROM categories WHERE id = ?', args: [id] });
