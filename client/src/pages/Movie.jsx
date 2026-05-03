@@ -97,6 +97,24 @@ export default function Movie() {
                 🔒 Notas reveladas na apresentação final
               </p>
             )}
+
+            {/* Vote button inside the hero */}
+            {!isPresenter && (
+              <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <Link
+                  to={`/movies/${id}/vote`}
+                  className="btn"
+                  style={{ fontSize: '0.85rem' }}
+                >
+                  {movie.your_score ? 'Editar avaliação' : 'Avaliar'}
+                </Link>
+                {movie.your_score && (
+                  <span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>
+                    Sua nota: <strong style={{ color: 'var(--amber)' }}>{movie.your_score}/10</strong>
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -107,59 +125,20 @@ export default function Movie() {
         </div>
       )}
 
-      {/* Rating + vote action */}
-      <div className="card">
-        <h3 style={{ marginBottom: '0.65rem' }}>Avaliação</h3>
-        {!isPresenter ? (
-          <>
-            {movie.your_score ? (
-              <p style={{ margin: '0 0 0.65rem', fontSize: '0.875rem' }}>
-                Sua nota:{' '}
-                <strong style={{ color: 'var(--amber)', fontSize: '1.1rem' }}>{movie.your_score}/10</strong>
+      {/* Host-only: vote comments from members */}
+      {isHost && movie.vote_comments && movie.vote_comments.length > 0 && (
+        <div className="card">
+          <h3 style={{ marginBottom: '0.75rem' }}>Comentários dos membros</h3>
+          {movie.vote_comments.map((vc, i) => (
+            <div key={i} style={{ marginBottom: '0.85rem' }}>
+              <p style={{ margin: '0 0 0.2rem', fontSize: '0.8rem', color: 'var(--muted)', fontWeight: 600 }}>
+                {vc.voter_name} — {vc.score}/10
               </p>
-            ) : (
-              <p className="muted" style={{ margin: '0 0 0.65rem', fontSize: '0.875rem' }}>
-                Você ainda não avaliou este filme.
-              </p>
-            )}
-            <Link
-              to={`/movies/${id}/vote`}
-              className="btn"
-              style={{ fontSize: '0.85rem', display: 'inline-block' }}
-            >
-              {movie.your_score ? 'Editar avaliação' : 'Avaliar'}
-            </Link>
-
-            {/* Host-only: comments from voters */}
-            {isHost && movie.vote_comments && movie.vote_comments.length > 0 && (
-              <div style={{ marginTop: '1.25rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
-                <p style={{
-                  fontSize: '0.75rem',
-                  textTransform: 'uppercase',
-                  color: 'var(--muted)',
-                  letterSpacing: '0.05em',
-                  margin: '0 0 0.75rem',
-                  fontWeight: 600,
-                }}>
-                  Comentários dos membros
-                </p>
-                {movie.vote_comments.map((vc, i) => (
-                  <div key={i} style={{ marginBottom: '0.85rem' }}>
-                    <p style={{ margin: '0 0 0.2rem', fontSize: '0.8rem', color: 'var(--muted)', fontWeight: 600 }}>
-                      {vc.voter_name} — {vc.score}/10
-                    </p>
-                    <p style={{ margin: 0, fontSize: '0.875rem', lineHeight: 1.55 }}>{vc.comment}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        ) : (
-          <p className="muted" style={{ fontSize: '0.85rem', margin: 0 }}>
-            Você apresentou este filme — não pode avaliá-lo.
-          </p>
-        )}
-      </div>
+              <p style={{ margin: 0, fontSize: '0.875rem', lineHeight: 1.55 }}>{vc.comment}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Referral counts — read-only; managed through the vote form */}
       {movie.referrals.length > 0 && (
