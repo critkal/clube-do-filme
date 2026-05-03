@@ -70,19 +70,6 @@ const SCHEMA_STATEMENTS = [
     sess TEXT NOT NULL,
     expired TEXT NOT NULL
   )`,
-  `CREATE TABLE IF NOT EXISTS date_options (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    season_id INTEGER REFERENCES seasons(id),
-    proposed_date TEXT NOT NULL,
-    proposed_by INTEGER REFERENCES members(id),
-    UNIQUE(season_id, proposed_date)
-  )`,
-  `CREATE TABLE IF NOT EXISTS date_votes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    date_option_id INTEGER REFERENCES date_options(id),
-    member_id INTEGER REFERENCES members(id),
-    UNIQUE(date_option_id, member_id)
-  )`,
 ];
 
 const MIGRATIONS = [

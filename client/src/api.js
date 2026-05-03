@@ -66,10 +66,6 @@ export const api = {
     }),
   results: (seasonId) => request(`/api/seasons/${seasonId}/results`),
   seasonMembers: (id) => request(`/api/seasons/${id}/members`),
-  dateOptions: (seasonId) => request(`/api/seasons/${seasonId}/date-options`),
-  addDateOption: (seasonId, date) => request(`/api/seasons/${seasonId}/date-options`, { method: 'POST', body: { date } }),
-  removeDateOption: (seasonId, optionId) => request(`/api/seasons/${seasonId}/date-options/${optionId}`, { method: 'DELETE' }),
-  toggleDateVote: (seasonId, dateOptionId) => request(`/api/seasons/${seasonId}/date-votes`, { method: 'POST', body: { date_option_id: dateOptionId } }),
   searchTMDB: (q) => request(`/api/tmdb/search?q=${encodeURIComponent(q)}`),
   tmdbMovie: (id) => request(`/api/tmdb/movie/${id}`),
 
