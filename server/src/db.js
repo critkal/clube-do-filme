@@ -87,6 +87,8 @@ const MIGRATIONS = [
   'ALTER TABLE movies ADD COLUMN runtime INTEGER',
   'ALTER TABLE members ADD COLUMN password_hash TEXT',
   'ALTER TABLE seasons ADD COLUMN host_id INTEGER REFERENCES members(id)',
+  'DROP TABLE IF EXISTS date_votes',
+  'DROP TABLE IF EXISTS date_options',
 ];
 
 // Recreates the ratings table with 1-10 constraint and comment column if needed.
