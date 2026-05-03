@@ -10,16 +10,23 @@ export default function Vote() {
   const { me } = useAuth();
   const navigate = useNavigate();
   const [movie, setMovie] = useState(null);
+  const [allCats, setAllCats] = useState([]);
   const [score, setScore] = useState(0);
   const [comment, setComment] = useState('');
+  const [selectedCatIds, setSelectedCatIds] = useState(new Set());
+  const [newCatName, setNewCatName] = useState('');
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
 
   useEffect(() => {
-    api.movie(id).then((m) => {
+    Promise.all([api.movie(id), api.categories()]).then(([m, cats]) => {
       setMovie(m);
+      setAllCats(cats);
       setScore(m.your_score || 0);
       setComment(m.your_comment || '');
+      setSelectedCatIds(
+        new Set(m.referrals.filter((r) => r.you_referred).map((r) => r.category_id)),
+      );
     }).catch((e) => setErr(e.message));
   }, [id]);
 
@@ -38,12 +45,68 @@ export default function Vote() {
     );
   }
 
+  // Referral counts by category id (from movie.referrals, includes categories with referrals)
+  const refCountById = Object.fromEntries(
+    movie.referrals.map((r) => [r.category_id, r.count]),
+  );
+
+  function toggleCat(catId) {
+    setSelectedCatIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(catId)) next.delete(catId);
+      else next.add(catId);
+      return next;
+    });
+  }
+
+  async function addNewCategory(e) {
+    e.preventDefault();
+    const name = newCatName.trim();
+    if (!name) return;
+    const existing = allCats.find((c) => c.name.toLowerCase() === name.toLowerCase());
+    if (existing) {
+      setSelectedCatIds((prev) => new Set([...prev, existing.id]));
+      setNewCatName('');
+      return;
+    }
+    try {
+      const c = await api.createCategory(name);
+      setAllCats((prev) => [...prev, { id: c.id, name }].sort((a, b) => a.name.localeCompare(b.name)));
+      setSelectedCatIds((prev) => new Set([...prev, c.id]));
+      setNewCatName('');
+    } catch (error) {
+      if (error.message === 'category_exists') {
+        const fresh = await api.categories();
+        const found = fresh.find((c) => c.name.toLowerCase() === name.toLowerCase());
+        if (found) {
+          setAllCats(fresh);
+          setSelectedCatIds((prev) => new Set([...prev, found.id]));
+          setNewCatName('');
+        }
+      } else {
+        setErr(error.message);
+      }
+    }
+  }
+
   async function submit(e) {
     e.preventDefault();
     if (!score) return;
     setSaving(true);
     try {
       await api.rate(movie.id, score, comment.trim() || null);
+
+      // Sync referrals: add newly selected, remove deselected
+      const currentlyReferred = new Set(
+        movie.referrals.filter((r) => r.you_referred).map((r) => r.category_id),
+      );
+      const toAdd = [...selectedCatIds].filter((catId) => !currentlyReferred.has(catId));
+      const toRemove = [...currentlyReferred].filter((catId) => !selectedCatIds.has(catId));
+      await Promise.all([
+        ...toAdd.map((catId) => api.addReferral(movie.id, { category_id: catId })),
+        ...toRemove.map((catId) => api.removeReferral(movie.id, catId)),
+      ]);
+
       navigate(`/movies/${id}`);
     } catch (error) {
       setErr(error.message);
@@ -74,36 +137,67 @@ export default function Vote() {
           </div>
         </div>
 
-        <form onSubmit={submit} className="stack" style={{ gap: '1.25rem' }}>
+        <form onSubmit={submit} className="stack" style={{ gap: '1.5rem' }}>
+
+          {/* Rating */}
           <div>
-            <p style={{
-              fontSize: '0.75rem',
-              color: 'var(--muted)',
-              margin: '0 0 0.6rem',
-              fontWeight: 600,
-              letterSpacing: '0.05em',
-              textTransform: 'uppercase',
-            }}>
-              Sua nota (1–10)
-            </p>
+            <p className="form-label">Sua nota (1–10)</p>
             <StarRating value={score} onChange={setScore} />
             {score > 0 && (
               <p className="muted" style={{ margin: '0.5rem 0 0', fontSize: '0.8rem' }}>
-                Nota selecionada: <strong style={{ color: 'var(--amber)' }}>{score}/10</strong>
+                Nota selecionada:{' '}
+                <strong style={{ color: 'var(--amber)' }}>{score}/10</strong>
               </p>
             )}
           </div>
 
+          {/* Category referrals */}
           <div>
-            <label style={{
-              fontSize: '0.75rem',
-              color: 'var(--muted)',
-              fontWeight: 600,
-              letterSpacing: '0.05em',
-              textTransform: 'uppercase',
-              display: 'block',
-              marginBottom: '0.5rem',
-            }}>
+            <p className="form-label">Indicar em categorias</p>
+            <p className="muted" style={{ margin: '0 0 0.75rem', fontSize: '0.8rem', lineHeight: 1.5 }}>
+              Selecione as categorias em que este filme deve concorrer. Ao final da temporada, os filmes com mais indicações participam da votação final.
+            </p>
+
+            {allCats.length > 0 && (
+              <div className="cat-checklist">
+                {allCats.map((c) => {
+                  const checked = selectedCatIds.has(c.id);
+                  const count = refCountById[c.id] ?? 0;
+                  return (
+                    <label key={c.id} className={`cat-check-item ${checked ? 'checked' : ''}`}>
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleCat(c.id)}
+                      />
+                      <span className="cat-check-name">{c.name}</span>
+                      {count > 0 && (
+                        <span className="cat-check-count">
+                          {count} {count === 1 ? 'indicação' : 'indicações'}
+                        </span>
+                      )}
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+
+            <form onSubmit={addNewCategory} className="row gap" style={{ marginTop: '0.65rem' }}>
+              <input
+                placeholder="Nova categoria…"
+                value={newCatName}
+                onChange={(e) => setNewCatName(e.target.value)}
+                style={{ fontSize: '0.85rem' }}
+              />
+              <button type="submit" disabled={!newCatName.trim()} style={{ flexShrink: 0, fontSize: '0.85rem' }}>
+                Adicionar
+              </button>
+            </form>
+          </div>
+
+          {/* Comment */}
+          <div>
+            <label className="form-label" style={{ display: 'block' }}>
               Comentário para o anfitrião (opcional)
             </label>
             <textarea

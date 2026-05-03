@@ -9,18 +9,12 @@ export default function Movie() {
   const { me } = useAuth();
   const navigate = useNavigate();
   const [movie, setMovie] = useState(null);
-  const [cats, setCats] = useState([]);
   const [err, setErr] = useState('');
-  const [newRefCat, setNewRefCat] = useState('');
-  const [linkRefCat, setLinkRefCat] = useState('');
-  const [removingRefCatId, setRemovingRefCatId] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
   const load = async () => {
     try {
-      const [m, c] = await Promise.all([api.movie(id), api.categories()]);
-      setMovie(m);
-      setCats(c);
+      setMovie(await api.movie(id));
     } catch (e) {
       setErr(e.message);
     }
@@ -32,50 +26,6 @@ export default function Movie() {
 
   const isPresenter = movie.presenter_id === me.id;
   const isHost = movie.season_host_id != null && movie.season_host_id === me.id;
-
-  // Categories the current user hasn't yet referred this movie to
-  const unReferredCats = cats.filter(
-    (c) => !movie.referrals.some((r) => r.category_id === c.id && r.you_referred),
-  );
-
-  async function handleAddReferral(catId) {
-    try {
-      await api.addReferral(movie.id, { category_id: catId });
-      await load();
-    } catch (e) { setErr(e.message); }
-  }
-
-  async function handleRemoveReferral(catId) {
-    setRemovingRefCatId(catId);
-    try {
-      await api.removeReferral(movie.id, catId);
-      await load();
-    } catch (e) {
-      setErr(e.message);
-    } finally {
-      setRemovingRefCatId(null);
-    }
-  }
-
-  async function handleNominateExisting(e) {
-    e.preventDefault();
-    if (!linkRefCat) return;
-    try {
-      await api.addReferral(movie.id, { category_id: Number(linkRefCat) });
-      setLinkRefCat('');
-      await load();
-    } catch (e) { setErr(e.message); }
-  }
-
-  async function handleCreateAndRefer(e) {
-    e.preventDefault();
-    if (!newRefCat.trim()) return;
-    try {
-      await api.addReferral(movie.id, { category_name: newRefCat.trim() });
-      setNewRefCat('');
-      await load();
-    } catch (e) { setErr(e.message); }
-  }
 
   async function adminDelete() {
     if (!window.confirm(`Excluir "${movie.title}"?`)) return;
@@ -93,7 +43,7 @@ export default function Movie() {
     <div className="stack">
       <Link to={`/seasons/${movie.season_id}`} className="back-link">← Temporada</Link>
 
-      {/* Cinematic hero — poster + info integrated */}
+      {/* Cinematic hero */}
       <div className="movie-hero card">
         {movie.poster_url && (
           <div
@@ -157,7 +107,7 @@ export default function Movie() {
         </div>
       )}
 
-      {/* Rating */}
+      {/* Rating + vote action */}
       <div className="card">
         <h3 style={{ marginBottom: '0.65rem' }}>Avaliação</h3>
         {!isPresenter ? (
@@ -180,7 +130,7 @@ export default function Movie() {
               {movie.your_score ? 'Editar avaliação' : 'Avaliar'}
             </Link>
 
-            {/* Host-only: vote comments from members */}
+            {/* Host-only: comments from voters */}
             {isHost && movie.vote_comments && movie.vote_comments.length > 0 && (
               <div style={{ marginTop: '1.25rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
                 <p style={{
@@ -211,82 +161,33 @@ export default function Movie() {
         )}
       </div>
 
-      {/* Referrals / Indicações */}
-      <div className="card">
-        <h3 style={{ marginBottom: '0.65rem' }}>Indicações</h3>
-        <p className="muted" style={{ fontSize: '0.8rem', margin: '0 0 0.85rem', lineHeight: 1.5 }}>
-          Indique este filme para uma categoria. Ao final da temporada, os filmes com mais indicações concorrem na votação final.
-        </p>
-
-        {movie.referrals.length > 0 && (
-          <ul className="tags" style={{ marginBottom: '0.85rem' }}>
+      {/* Referral counts — read-only; managed through the vote form */}
+      {movie.referrals.length > 0 && (
+        <div className="card">
+          <h3 style={{ marginBottom: '0.65rem' }}>Indicações</h3>
+          <ul className="tags" style={{ margin: 0 }}>
             {movie.referrals.map((r) => (
               <li key={r.category_id} className="tag referral-tag">
                 <span className="referral-tag-name">{r.category_name}</span>
                 <span className="referral-tag-count">
                   {r.count} {r.count === 1 ? 'indicação' : 'indicações'}
                 </span>
-                {r.you_referred ? (
-                  <button
-                    className="link-inline"
-                    onClick={() => handleRemoveReferral(r.category_id)}
-                    disabled={removingRefCatId === r.category_id}
-                    title="remover minha indicação"
-                    aria-label="remover indicação"
-                    style={{ color: 'var(--amber)' }}
-                  >
-                    {removingRefCatId === r.category_id ? '…' : '✓ indicado ×'}
-                  </button>
-                ) : (
-                  <button
-                    className="link-inline"
-                    onClick={() => handleAddReferral(r.category_id)}
-                    title="indicar"
-                    style={{ color: 'var(--muted)', fontSize: '0.8rem' }}
-                  >
-                    + indicar
-                  </button>
+                {r.you_referred && (
+                  <span style={{ fontSize: '0.7rem', color: 'var(--amber)' }}>✓</span>
                 )}
               </li>
             ))}
           </ul>
-        )}
-        {movie.referrals.length === 0 && (
-          <p className="muted" style={{ fontSize: '0.875rem', marginBottom: '0.85rem' }}>
-            Nenhuma indicação ainda. Seja o primeiro!
-          </p>
-        )}
-
-        <div className="stack" style={{ gap: '0.6rem' }}>
-          <form onSubmit={handleNominateExisting} className="row gap">
-            <select
-              value={linkRefCat}
-              onChange={(e) => setLinkRefCat(e.target.value)}
-              style={{ fontSize: '0.85rem' }}
-            >
-              <option value="">— indicar em categoria existente —</option>
-              {unReferredCats.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-            <button type="submit" disabled={!linkRefCat} style={{ flexShrink: 0, fontSize: '0.85rem' }}>
-              Indicar
-            </button>
-          </form>
-
-          <form onSubmit={handleCreateAndRefer} className="row gap">
-            <input
-              placeholder="Nova categoria…"
-              value={newRefCat}
-              onChange={(e) => setNewRefCat(e.target.value)}
-              style={{ fontSize: '0.85rem' }}
-            />
-            <button type="submit" disabled={!newRefCat.trim()} style={{ flexShrink: 0, fontSize: '0.85rem' }}>
-              Criar e indicar
-            </button>
-          </form>
+          {!isPresenter && (
+            <p className="muted" style={{ margin: '0.75rem 0 0', fontSize: '0.8rem' }}>
+              Gerencie suas indicações na{' '}
+              <Link to={`/movies/${id}/vote`} style={{ color: 'var(--amber)' }}>
+                página de avaliação
+              </Link>.
+            </p>
+          )}
         </div>
-      </div>
+      )}
 
       {me.is_admin && (
         <button className="btn danger" onClick={adminDelete} disabled={deleting}>
