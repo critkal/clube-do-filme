@@ -89,6 +89,8 @@ const MIGRATIONS = [
   'ALTER TABLE seasons ADD COLUMN host_id INTEGER REFERENCES members(id)',
   'DROP TABLE IF EXISTS date_votes',
   'DROP TABLE IF EXISTS date_options',
+  'ALTER TABLE members ADD COLUMN is_active INTEGER DEFAULT 1',
+  'ALTER TABLE movies ADD COLUMN winner INTEGER DEFAULT 0',
 ];
 
 // Recreates the ratings table with 1-10 constraint and comment column if needed.

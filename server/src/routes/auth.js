@@ -8,7 +8,7 @@ const router = express.Router();
 // GET /api/members — used by login dropdown
 router.get('/members', async (_req, res) => {
   const { rows } = await db.execute(
-    'SELECT id, first_name, is_admin, password_hash FROM members ORDER BY first_name COLLATE NOCASE',
+    'SELECT id, first_name, is_admin, password_hash FROM members WHERE is_active = 1 ORDER BY first_name COLLATE NOCASE',
   );
   res.json(rows.map((r) => ({
     id: r.id,
