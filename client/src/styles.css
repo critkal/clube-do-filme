@@ -428,14 +428,18 @@ select {
 .movie-detail { gap: 1.25rem; flex-wrap: wrap; }
 
 /* ── RATING PICKER (1–10) ────────────────────────────── */
-.rating-picker { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+.rating-picker {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 0.25rem;
+}
 .rating-btn {
-  width: 2.2rem;
-  height: 2.2rem;
+  aspect-ratio: 1;
+  width: 100%;
   border: 1px solid var(--border);
   border-radius: 0.35rem;
   background: transparent;
-  color: var(--muted);
+  color: var(--text);
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
@@ -456,7 +460,7 @@ select {
   border-color: var(--amber);
   color: var(--amber);
 }
-.rating-picker:not(.disabled) .rating-btn:hover { transform: scale(1.12); }
+.rating-picker:not(.disabled) .rating-btn:hover { transform: scale(1.08); }
 .rating-picker.disabled .rating-btn { cursor: default; }
 .rating-picker.disabled .rating-btn:hover { transform: none; }
 
@@ -505,38 +509,39 @@ select {
 }
 .cat-checklist {
   display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  max-height: 14rem;
-  overflow-y: auto;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   padding: 0.15rem 0;
 }
-.cat-check-item {
-  display: flex;
+.cat-chip {
+  display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
-  padding: 0.45rem 0.6rem;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition: background 0.1s, border-color 0.1s;
+  gap: 0.4rem;
+  padding: 0.45rem 0.875rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
   font-size: 0.875rem;
-  user-select: none;
-}
-.cat-check-item:hover { background: var(--surface-2); }
-.cat-check-item.checked {
-  background: rgba(245, 158, 11, 0.08);
-  border-color: rgba(245, 158, 11, 0.3);
-}
-.cat-check-item input[type="checkbox"] {
-  accent-color: var(--amber);
-  width: 1rem;
-  height: 1rem;
-  flex-shrink: 0;
+  font-weight: 500;
   cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  min-height: auto;
+  text-align: left;
 }
-.cat-check-name { flex: 1; }
-.cat-check-count { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+.cat-chip:hover { background: var(--surface-2); border-color: var(--amber); }
+.cat-chip.checked {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: var(--amber);
+  color: var(--amber);
+}
+.cat-chip-count {
+  font-size: 0.72rem;
+  opacity: 0.7;
+  white-space: nowrap;
+}
 
 /* ── NOMINEE ─────────────────────────────────────────── */
 .nominee {

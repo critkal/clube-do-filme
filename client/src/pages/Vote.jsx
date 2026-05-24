@@ -164,19 +164,20 @@ export default function Vote() {
                   const checked = selectedCatIds.has(c.id);
                   const count = refCountById[c.id] ?? 0;
                   return (
-                    <label key={c.id} className={`cat-check-item ${checked ? 'checked' : ''}`}>
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => toggleCat(c.id)}
-                      />
-                      <span className="cat-check-name">{c.name}</span>
+                    <button
+                      key={c.id}
+                      type="button"
+                      className={`cat-chip ${checked ? 'checked' : ''}`}
+                      onClick={() => toggleCat(c.id)}
+                      aria-pressed={checked}
+                    >
+                      {c.name}
                       {count > 0 && (
-                        <span className="cat-check-count">
+                        <span className="cat-chip-count">
                           {count} {count === 1 ? 'indicação' : 'indicações'}
                         </span>
                       )}
-                    </label>
+                    </button>
                   );
                 })}
               </div>
