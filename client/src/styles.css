@@ -400,6 +400,50 @@ button.link-inline:hover { color: var(--danger); }
 }
 .back-link:hover { color: var(--text); }
 
+/* Inline confirmation (replaces window.confirm) */
+.confirm-inline {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.4rem;
+}
+.confirm-inline-q {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+/* Square icon button with a real tap target */
+button.icon-btn {
+  min-width: var(--tap);
+  min-height: var(--tap);
+  padding: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--border);
+}
+button.icon-btn:hover:not(:disabled) { color: var(--text); border-color: var(--border-bright); background: var(--surface-3); }
+button.icon-btn:disabled { opacity: 0.3; }
+
+/* Row helper that wraps on small screens */
+.row.wrap { flex-wrap: wrap; }
+
+/* Full-width collapsible section toggle (e.g. presentation queue) */
+.collapsible-toggle {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--text);
+  min-height: var(--tap);
+}
+.collapsible-toggle:hover:not(:disabled) { background: transparent; }
+
 /* ── FORMS ───────────────────────────────────────────── */
 input, select, textarea {
   background: var(--surface-2);

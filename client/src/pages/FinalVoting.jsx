@@ -7,6 +7,7 @@ export default function FinalVoting() {
   const [data, setData] = useState(null);
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState({});
+  const [voteErr, setVoteErr] = useState({});
 
   const load = async () => {
     try { setData(await api.finalVoting(id)); } catch (e) { setErr(e.message); }
@@ -15,11 +16,13 @@ export default function FinalVoting() {
 
   async function vote(categoryId, movieId) {
     setBusy((b) => ({ ...b, [categoryId]: true }));
+    setVoteErr((v) => ({ ...v, [categoryId]: '' }));
     try {
       await api.castFinalVote(id, categoryId, movieId);
       await load();
     } catch (e) {
-      alert(e.message === 'already_voted' ? 'Você já votou nesta categoria.' : e.message);
+      const msg = e.message === 'already_voted' ? 'Você já votou nesta categoria.' : e.message;
+      setVoteErr((v) => ({ ...v, [categoryId]: msg }));
     } finally {
       setBusy((b) => ({ ...b, [categoryId]: false }));
     }
@@ -73,6 +76,7 @@ export default function FinalVoting() {
               );
             })}
           </ul>
+          {voteErr[cat.id] && <p className="error" style={{ margin: 0 }}>{voteErr[cat.id]}</p>}
         </div>
       ))}
     </div>

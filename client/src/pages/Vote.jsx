@@ -60,7 +60,7 @@ export default function Vote() {
   }
 
   async function addNewCategory(e) {
-    e.preventDefault();
+    e?.preventDefault();
     const name = newCatName.trim();
     if (!name) return;
     const existing = allCats.find((c) => c.name.toLowerCase() === name.toLowerCase());
@@ -183,16 +183,20 @@ export default function Vote() {
               </div>
             )}
 
-            <form onSubmit={addNewCategory} className="row gap" style={{ marginTop: '0.65rem' }}>
+            {/* Not a <form>: this lives inside the rating <form>, and nested forms are invalid HTML */}
+            <div className="row gap" style={{ marginTop: '0.65rem' }}>
               <input
                 placeholder="Nova categoria…"
                 value={newCatName}
                 onChange={(e) => setNewCatName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') { e.preventDefault(); addNewCategory(); }
+                }}
               />
-              <button type="submit" disabled={!newCatName.trim()} style={{ flexShrink: 0, fontSize: '0.85rem' }}>
+              <button type="button" onClick={addNewCategory} disabled={!newCatName.trim()} style={{ flexShrink: 0 }}>
                 Adicionar
               </button>
-            </form>
+            </div>
           </div>
 
           {/* Comment */}

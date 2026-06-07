@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api.js';
+import ConfirmButton from '../components/ConfirmButton.jsx';
 
 const TABS = [
   { key: 'members', label: 'Membros' },
@@ -128,8 +129,8 @@ function MembersSection({ members, ctx }) {
   return (
     <section className="card">
       <h2>Membros</h2>
-      <form onSubmit={create} className="row gap" style={{ marginBottom: '0.75rem' }}>
-        <input placeholder="Primeiro nome" value={name} onChange={(e) => setName(e.target.value)} />
+      <form onSubmit={create} className="row gap wrap" style={{ marginBottom: '0.75rem' }}>
+        <input placeholder="Primeiro nome" value={name} onChange={(e) => setName(e.target.value)} style={{ flex: 1, minWidth: '12rem' }} />
         <label className="row gap-sm" style={{ flexShrink: 0 }}>
           <input type="checkbox" checked={isAdmin} onChange={(e) => setIsAdmin(e.target.checked)} style={{ width: 'auto', minHeight: 'auto' }} />
           admin
@@ -164,20 +165,22 @@ function MembersSection({ members, ctx }) {
                     {m.first_name}
                     {m.is_admin && <span className="badge">admin</span>}
                   </span>
-                  <div className="row gap-sm">
+                  <div className="row gap-sm wrap">
                     <button className="link-btn" onClick={() => startEdit(m)}>editar</button>
                     {m.is_admin && (
                       <button className="link-btn" onClick={() => { setPwdId(pwdId === m.id ? null : m.id); setPwdValue(''); }}>
                         {pwdId === m.id ? 'cancelar' : 'senha'}
                       </button>
                     )}
-                    <button
+                    <ConfirmButton
                       className="link-btn danger"
-                      onClick={() => ctx.act(() => api.deleteMember(m.id), 'Removido', `member-${m.id}`)}
-                      disabled={ctx.pending === `member-${m.id}`}
+                      question={`Remover ${m.first_name}?`}
+                      busy={ctx.pending === `member-${m.id}`}
+                      busyLabel="removendo…"
+                      onConfirm={() => ctx.act(() => api.deleteMember(m.id), 'Removido', `member-${m.id}`)}
                     >
-                      {ctx.pending === `member-${m.id}` ? 'removendo…' : 'remover'}
-                    </button>
+                      remover
+                    </ConfirmButton>
                   </div>
                 </div>
                 {pwdId === m.id && (
@@ -237,10 +240,8 @@ function SeasonsSection({ seasons, members, ctx }) {
     }
   };
 
-  const deleteSeason = (s) => ctx.act(async () => {
-    if (!window.confirm(`Excluir "${s.name || `Temporada #${s.id}`}"?\nIsso remove todos os filmes, avaliações e votos.`)) return false;
-    await api.deleteSeason(s.id);
-  }, 'Temporada excluída', `season-${s.id}`);
+  const deleteSeason = (s) =>
+    ctx.act(() => api.deleteSeason(s.id), 'Temporada excluída', `season-${s.id}`);
 
   const creating = ctx.pending === 'creating-season';
 
@@ -318,13 +319,15 @@ function SeasonsSection({ seasons, members, ctx }) {
                       {ctx.pending === `present-${s.id}` ? 'Publicando…' : '🎬 Apresentar'}
                     </button>
                   )}
-                  <button
+                  <ConfirmButton
                     className="link-btn danger"
-                    onClick={() => deleteSeason(s)}
-                    disabled={ctx.pending === `season-${s.id}`}
+                    question="Excluir? Remove filmes, avaliações e votos."
+                    busy={ctx.pending === `season-${s.id}`}
+                    busyLabel="excluindo…"
+                    onConfirm={() => deleteSeason(s)}
                   >
-                    {ctx.pending === `season-${s.id}` ? 'excluindo…' : 'excluir'}
-                  </button>
+                    excluir
+                  </ConfirmButton>
                 </div>
               </div>
             )}
@@ -384,8 +387,8 @@ function SeasonMemberOrder({ seasonId, ctx, onClose }) {
               {m.hasPresented && <span style={{ color: 'var(--green, #4ade80)', fontSize: '0.8rem' }}>✓</span>}
             </span>
             <div className="row gap-sm">
-              <button className="link" style={{ fontSize: '1rem', lineHeight: 1 }} onClick={() => move(i, -1)} disabled={i === 0}>↑</button>
-              <button className="link" style={{ fontSize: '1rem', lineHeight: 1 }} onClick={() => move(i, 1)} disabled={i === members.length - 1}>↓</button>
+              <button className="icon-btn" aria-label={`Mover ${m.name} para cima`} onClick={() => move(i, -1)} disabled={i === 0}>↑</button>
+              <button className="icon-btn" aria-label={`Mover ${m.name} para baixo`} onClick={() => move(i, 1)} disabled={i === members.length - 1}>↓</button>
             </div>
           </li>
         ))}
@@ -408,10 +411,8 @@ function MoviesSection({ movies, seasons, ctx }) {
   const bySeason = Object.fromEntries(seasonIds.map((id) => [id, []]));
   for (const m of movies) bySeason[m.season_id].push(m);
 
-  const deleteMovie = (m) => ctx.act(async () => {
-    if (!window.confirm(`Excluir "${m.title}"?`)) return false;
-    await api.deleteMovie(m.id);
-  }, 'Filme excluído', `movie-${m.id}`);
+  const deleteMovie = (m) =>
+    ctx.act(() => api.deleteMovie(m.id), 'Filme excluído', `movie-${m.id}`);
 
   if (movies.length === 0) {
     return <p className="muted">Nenhum filme cadastrado.</p>;
@@ -445,13 +446,15 @@ function MoviesSection({ movies, seasons, ctx }) {
                     >
                       ver
                     </Link>
-                    <button
+                    <ConfirmButton
                       className="link-btn danger"
-                      onClick={() => deleteMovie(m)}
-                      disabled={ctx.pending === `movie-${m.id}`}
+                      question={`Excluir "${m.title}"?`}
+                      busy={ctx.pending === `movie-${m.id}`}
+                      busyLabel="excluindo…"
+                      onConfirm={() => deleteMovie(m)}
                     >
-                      {ctx.pending === `movie-${m.id}` ? 'excluindo…' : 'excluir'}
-                    </button>
+                      excluir
+                    </ConfirmButton>
                   </div>
                 </li>
               ))}
@@ -496,8 +499,8 @@ function CategoriesSection({ cats, ctx }) {
   return (
     <section className="card">
       <h2>Categorias</h2>
-      <form onSubmit={create} className="row gap" style={{ marginBottom: '0.75rem' }}>
-        <input placeholder="Nome da categoria" value={name} onChange={(e) => setName(e.target.value)} />
+      <form onSubmit={create} className="row gap wrap" style={{ marginBottom: '0.75rem' }}>
+        <input placeholder="Nome da categoria" value={name} onChange={(e) => setName(e.target.value)} style={{ flex: 1, minWidth: '12rem' }} />
         <button type="submit" disabled={!name.trim() || creating}>
           {creating ? 'Adicionando…' : 'Adicionar'}
         </button>
@@ -520,13 +523,15 @@ function CategoriesSection({ cats, ctx }) {
                 <span>{c.name}</span>
                 <div className="row gap-sm">
                   <button className="link-btn" onClick={() => { setEditId(c.id); setEditName(c.name); }}>editar</button>
-                  <button
+                  <ConfirmButton
                     className="link-btn danger"
-                    onClick={() => ctx.act(() => api.deleteCategory(c.id), 'Excluída', `cat-${c.id}`)}
-                    disabled={ctx.pending === `cat-${c.id}`}
+                    question={`Excluir "${c.name}"?`}
+                    busy={ctx.pending === `cat-${c.id}`}
+                    busyLabel="excluindo…"
+                    onConfirm={() => ctx.act(() => api.deleteCategory(c.id), 'Excluída', `cat-${c.id}`)}
                   >
-                    {ctx.pending === `cat-${c.id}` ? 'excluindo…' : 'excluir'}
-                  </button>
+                    excluir
+                  </ConfirmButton>
                 </div>
               </div>
             )}

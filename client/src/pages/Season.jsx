@@ -125,20 +125,9 @@ function CollapsibleQueue({ members }) {
     <section className="card">
       <button
         type="button"
+        className="collapsible-toggle"
         onClick={() => setOpen((v) => !v)}
-        style={{
-          display: 'flex',
-          width: '100%',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          background: 'transparent',
-          border: 'none',
-          padding: 0,
-          cursor: 'pointer',
-          color: 'var(--text)',
-          minHeight: 'auto',
-          gap: '0.5rem',
-        }}
+        aria-expanded={open}
       >
         <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600 }}>Fila de apresentações</h3>
         <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>

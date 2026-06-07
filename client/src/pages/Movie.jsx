@@ -3,6 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../App.jsx';
 import MoviePoster from '../components/MoviePoster.jsx';
+import ConfirmButton from '../components/ConfirmButton.jsx';
 
 export default function Movie() {
   const { id } = useParams();
@@ -28,7 +29,6 @@ export default function Movie() {
   const isHost = movie.season_host_id != null && movie.season_host_id === me.id;
 
   async function adminDelete() {
-    if (!window.confirm(`Excluir "${movie.title}"?`)) return;
     setDeleting(true);
     try {
       await api.deleteMovie(movie.id);
@@ -168,9 +168,15 @@ export default function Movie() {
       )}
 
       {me.is_admin && (
-        <button className="btn danger" onClick={adminDelete} disabled={deleting}>
-          {deleting ? 'Excluindo…' : 'Excluir filme'}
-        </button>
+        <ConfirmButton
+          className="btn danger"
+          question={`Excluir "${movie.title}"?`}
+          busy={deleting}
+          busyLabel="Excluindo…"
+          onConfirm={adminDelete}
+        >
+          Excluir filme
+        </ConfirmButton>
       )}
     </div>
   );
