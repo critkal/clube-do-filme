@@ -1,14 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Clube do Filme">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Clube do Filme">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#231942"/>
-      <stop offset="1" stop-color="#5e548e"/>
-    </linearGradient>
+    <clipPath id="cdf-bar"><rect x="0" y="0" width="64" height="14" rx="3.1"></rect></clipPath>
   </defs>
-  <rect width="64" height="64" rx="12" fill="url(#g)"/>
-  <circle cx="20" cy="20" r="4" fill="#f2e9e4"/>
-  <circle cx="44" cy="20" r="4" fill="#f2e9e4"/>
-  <circle cx="20" cy="44" r="4" fill="#f2e9e4"/>
-  <circle cx="44" cy="44" r="4" fill="#f2e9e4"/>
-  <rect x="27" y="12" width="10" height="40" rx="2" fill="#f2e9e4"/>
+  <rect width="100" height="100" rx="22" fill="#181020"></rect>
+  <g transform="translate(50.9 49.3) rotate(-5)">
+    <rect x="-32" y="-1" width="64" height="33" rx="5" fill="#f5b73d"></rect>
+    <rect x="-23" y="7" width="46" height="3.4" rx="1.7" fill="#181020" opacity="0.5"></rect>
+    <rect x="-23" y="16" width="34" height="3.4" rx="1.7" fill="#181020" opacity="0.5"></rect>
+    <g transform="translate(-32 -2) rotate(-13)">
+      <g transform="translate(0 -14)">
+        <rect x="0" y="0" width="64" height="14" rx="3.1" fill="#f5b73d"></rect>
+        <g clip-path="url(#cdf-bar)" fill="#181020">
+          <polygon points="1.28,14 6.61,14 13.61,0 8.28,0"></polygon>
+          <polygon points="11.95,14 17.28,14 24.28,0 18.95,0"></polygon>
+          <polygon points="22.61,14 27.95,14 34.95,0 29.61,0"></polygon>
+          <polygon points="33.28,14 38.61,14 45.61,0 40.28,0"></polygon>
+          <polygon points="43.95,14 49.28,14 56.28,0 50.95,0"></polygon>
+          <polygon points="54.61,14 59.95,14 66.95,0 61.61,0"></polygon>
+        </g>
+      </g>
+    </g>
+  </g>
 </svg>
