@@ -13,6 +13,15 @@ import Admin from './pages/Admin.jsx';
 import FinalVoting from './pages/FinalVoting.jsx';
 import Results from './pages/Results.jsx';
 
+// A plain reload can be served straight from the HTTP cache, re-running the very
+// same (stale) bundle that reported the update — so the banner never goes away.
+// A unique query param forces the browser to fetch index.html fresh from the network.
+function hardReload() {
+  const url = new URL(window.location.href);
+  url.searchParams.set('_v', Date.now().toString(36));
+  window.location.assign(url.toString());
+}
+
 const AuthCtx = createContext(null);
 export const useAuth = () => useContext(AuthCtx);
 
@@ -66,7 +75,7 @@ export default function App() {
       {updateReady && (
         <div className="update-banner" role="status">
           <span>Nova versão disponível</span>
-          <button className="btn primary" onClick={() => window.location.reload()}>
+          <button className="btn primary" onClick={hardReload}>
             Atualizar
           </button>
         </div>
