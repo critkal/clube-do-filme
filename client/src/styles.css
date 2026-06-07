@@ -365,14 +365,6 @@ a:hover { color: var(--purple); }
 }
 
 /* ── GRID & LIST ─────────────────────────────────────── */
-.grid {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  gap: 0.75rem;
-  grid-template-columns: 1fr;
-}
 .list {
   list-style: none;
   padding: 0;
@@ -603,19 +595,6 @@ select {
   padding: 0.5rem;
 }
 
-/* ── MOVIE CARD ──────────────────────────────────────── */
-.movie-card { transition: border-color 0.2s, background 0.15s; }
-.movie-card:hover { border-color: var(--border-bright); }
-.movie-card:active { background: var(--surface-2); }
-.movie-card .movie-link {
-  display: flex;
-  gap: 0.875rem;
-  color: inherit;
-  text-decoration: none;
-}
-.movie-card h3 { font-size: 0.95rem; margin: 0 0 0.2rem; }
-.movie-detail { gap: 1.25rem; flex-wrap: wrap; }
-
 /* Per-user rating badge on movie cards */
 .your-rating {
   display: inline-flex;
@@ -636,6 +615,79 @@ select {
   color: var(--muted);
   font-weight: 500;
 }
+
+/* ── MOVIE POST CARD (season feed) ───────────────────── */
+.post-feed {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.post-card {
+  padding: 0;
+  overflow: hidden;
+  transition: border-color 0.2s, background 0.15s;
+}
+.post-card:hover { border-color: var(--border-bright); }
+.post-card:active { background: var(--surface-2); }
+.post-card-link { display: block; color: inherit; text-decoration: none; }
+
+.post-header {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.avatar {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gradient);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+}
+.post-byline { display: flex; flex-direction: column; min-width: 0; }
+.post-author { font-size: 0.9rem; color: var(--muted); }
+.post-author strong { color: var(--text); font-weight: 600; }
+.post-meta { font-size: 0.76rem; color: var(--muted); }
+
+.post-body {
+  display: flex;
+  gap: 0.875rem;
+  padding: 0.9rem 1rem;
+}
+.post-movie-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.post-movie-info h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 0.15rem;
+  line-height: 1.3;
+}
+.post-movie-info h3 .muted { font-weight: 400; }
+.post-movie-credits { margin: 0 0 0.6rem; font-size: 0.82rem; }
+.post-rating {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.6rem;
+  margin-top: auto;
+}
+.post-avg { font-size: 0.8rem; }
 
 /* ── RATING PICKER (1–10) ────────────────────────────── */
 .rating-picker {
@@ -1026,7 +1078,6 @@ select {
 
 /* ── MOBILE ──────────────────────────────────────────── */
 @media (max-width: 480px) {
-  .movie-detail { flex-direction: column; align-items: flex-start; }
   .poster-lg { width: 150px; height: 225px; }
   h1 { font-size: 1.45rem; }
   .movie-hero-content {

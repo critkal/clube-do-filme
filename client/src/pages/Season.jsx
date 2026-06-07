@@ -81,37 +81,10 @@ export default function Season() {
             <h2>Filmes</h2>
             <span className="muted" style={{ fontSize: '0.72rem', marginLeft: 'auto' }}>mais recentes primeiro</span>
           </div>
-          <ul className="grid">
+          <ul className="post-feed">
             {sortedMovies.map((m) => (
-              <li key={m.id} className="card movie-card">
-                <Link to={`/movies/${m.id}`} className="movie-link">
-                  <MoviePoster src={m.poster_url} alt={m.title} size="sm" />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <h3>{m.title}{m.year && <span className="muted" style={{ fontWeight: 400 }}> ({m.year})</span>}</h3>
-                    <p className="muted" style={{ margin: '0.1rem 0 0.35rem' }}>
-                      Rodada {m.round_number} · {m.presenter_name}
-                      {m.created_at && (
-                        <span> · {new Date(m.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-                      )}
-                    </p>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.25rem 0.6rem', fontSize: '0.85rem' }}>
-                      {m.presenter_id === me.id ? (
-                        <span className="your-rating none">Seu filme</span>
-                      ) : m.your_score != null ? (
-                        <span className="your-rating">
-                          Sua nota <strong>★ {m.your_score}/10</strong>
-                        </span>
-                      ) : (
-                        <span className="your-rating none">Você ainda não avaliou</span>
-                      )}
-                      {m.rating_count > 0 && (
-                        <span className="muted" style={{ fontSize: '0.8rem' }}>
-                          · média ★ {m.average_rating.toFixed(1)} ({m.rating_count})
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </Link>
+              <li key={m.id}>
+                <MoviePostCard m={m} isOwn={m.presenter_id === me.id} />
               </li>
             ))}
           </ul>
@@ -120,6 +93,64 @@ export default function Season() {
 
       {members.length > 0 && <CollapsibleQueue members={members} />}
     </div>
+  );
+}
+
+function initials(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  const first = parts[0]?.[0] || '';
+  const last = parts.length > 1 ? parts[parts.length - 1][0] : '';
+  return (first + last).toUpperCase();
+}
+
+function formatPostDate(iso) {
+  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function MoviePostCard({ m, isOwn }) {
+  return (
+    <article className="card post-card">
+      <Link to={`/movies/${m.id}`} className="post-card-link">
+        <header className="post-header">
+          <span className="avatar" aria-hidden="true">{initials(m.presenter_name)}</span>
+          <div className="post-byline">
+            <span className="post-author">
+              <strong>{m.presenter_name}</strong> apresentou
+            </span>
+            <span className="post-meta">
+              Rodada {m.round_number}
+              {m.created_at && ` · ${formatPostDate(m.created_at)}`}
+            </span>
+          </div>
+        </header>
+
+        <div className="post-body">
+          <MoviePoster src={m.poster_url} alt={m.title} size="sm" />
+          <div className="post-movie-info">
+            <h3>
+              {m.title}
+              {m.year && <span className="muted"> ({m.year})</span>}
+            </h3>
+            {m.director && (
+              <p className="post-movie-credits muted">dir. {m.director}</p>
+            )}
+            <div className="post-rating">
+              {isOwn ? (
+                <span className="your-rating none">Seu filme</span>
+              ) : m.your_score != null ? (
+                <span className="your-rating">Sua nota <strong>★ {m.your_score}/10</strong></span>
+              ) : (
+                <span className="your-rating none">Você ainda não avaliou</span>
+              )}
+              {m.rating_count > 0 && (
+                <span className="muted post-avg">· média ★ {m.average_rating.toFixed(1)} ({m.rating_count})</span>
+              )}
+            </div>
+          </div>
+        </div>
+      </Link>
+    </article>
   );
 }
 
