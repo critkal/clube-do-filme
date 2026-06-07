@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../App.jsx';
 
 export default function Nav() {
@@ -17,26 +17,9 @@ export default function Nav() {
             <ClapMark size={26} />
             <span className="brand-text">Clube do <span className="brand-accent">Filme</span></span>
           </Link>
-          {me && (
-            <>
-              {/* Desktop: inline links. Hidden on mobile, replaced by the bottom bar. */}
-              <nav className="nav-desktop">
-                <Link to="/" className={homeActive ? 'active' : ''}>Início</Link>
-                {me.is_admin && <Link to="/admin" className={adminActive ? 'active' : ''}>Admin</Link>}
-                <span className="nav-divider" />
-                <span className="nav-user">{me.first_name}</span>
-                <span className="nav-divider" />
-                <button className="link nav-logout" onClick={logout}>Sair</button>
-              </nav>
-              {/* Mobile: just show who is logged in. */}
-              <span className="nav-user nav-user-mobile">{me.first_name}</span>
-            </>
-          )}
-          {!me && (
-            <nav className="nav-desktop">
-              <NavLink to="/login">Entrar</NavLink>
-            </nav>
-          )}
+          {/* Navigation lives in the sidebar (desktop) / bottom bar (mobile).
+              The header only carries the brand + who is logged in. */}
+          {me && <span className="nav-user nav-user-mobile">{me.first_name}</span>}
         </div>
       </header>
 
