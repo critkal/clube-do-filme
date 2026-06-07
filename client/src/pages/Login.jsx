@@ -47,7 +47,7 @@ export default function Login() {
   return (
     <div className="login-wrap">
       <div className="login-card">
-        <div className="login-brand">Clube do Filme</div>
+        <div className="login-brand">Clube do <span className="brand-accent">Filme</span></div>
         <p className="muted" style={{ marginBottom: '1.5rem', marginTop: '0.25rem' }}>
           Escolha seu nome para entrar no clube.
         </p>

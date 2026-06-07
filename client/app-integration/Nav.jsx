@@ -1,14 +1,8 @@
-import { useId } from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../App.jsx';
 
 export default function Nav() {
   const { me, logout } = useAuth();
-  const { pathname } = useLocation();
-  // "/" redirects, so highlight Início across the whole season/movie flow.
-  const homeActive = pathname === '/' || pathname.startsWith('/seasons') || pathname.startsWith('/movies');
-  const adminActive = pathname.startsWith('/admin');
-
   return (
     <>
       <header className="nav">
@@ -21,8 +15,8 @@ export default function Nav() {
             <>
               {/* Desktop: inline links. Hidden on mobile, replaced by the bottom bar. */}
               <nav className="nav-desktop">
-                <Link to="/" className={homeActive ? 'active' : ''}>Início</Link>
-                {me.is_admin && <Link to="/admin" className={adminActive ? 'active' : ''}>Admin</Link>}
+                <NavLink to="/" end>Temporadas</NavLink>
+                {me.is_admin && <NavLink to="/admin">Admin</NavLink>}
                 <span className="nav-divider" />
                 <span className="nav-user">{me.first_name}</span>
                 <span className="nav-divider" />
@@ -40,46 +34,13 @@ export default function Nav() {
         </div>
       </header>
 
-      {me && (
-        <aside className="sidebar">
-          <Link to="/" className="brand sidebar-brand" aria-label="Clube do Filme">
-            <ClapMark size={30} />
-            <span className="brand-text">Clube do <span className="brand-accent">Filme</span></span>
-          </Link>
-          <nav className="sidebar-nav" aria-label="Navegação principal">
-            <Link to="/" className={`sidebar-item ${homeActive ? 'active' : ''}`}>
-              <IconHome /><span>Início</span>
-            </Link>
-            {me.is_admin && (
-              <Link to="/admin" className={`sidebar-item ${adminActive ? 'active' : ''}`}>
-                <IconAdmin /><span>Admin</span>
-              </Link>
-            )}
-          </nav>
-          <div className="sidebar-footer">
-            <span className="nav-user">{me.first_name}</span>
-            <button type="button" className="sidebar-item sidebar-logout" onClick={logout}>
-              <IconLogout /><span>Sair</span>
-            </button>
-          </div>
-        </aside>
-      )}
-
-      {me && (
-        <BottomNav
-          isAdmin={me.is_admin}
-          logout={logout}
-          homeActive={homeActive}
-          adminActive={adminActive}
-        />
-      )}
+      {me && <BottomNav isAdmin={me.is_admin} logout={logout} />}
     </>
   );
 }
 
 /* ── Brand mark: film clapperboard ──────────────────────── */
 function ClapMark({ size = 26 }) {
-  const clipId = useId();
   return (
     <svg className="brand-mark" viewBox="0 0 100 100" width={size} height={size} aria-hidden="true">
       <g transform="translate(50.9 49.3) rotate(-5)">
@@ -89,10 +50,10 @@ function ClapMark({ size = 26 }) {
         <g transform="translate(-32 -2) rotate(-13)">
           <g transform="translate(0 -14)">
             <defs>
-              <clipPath id={clipId}><rect width="64" height="14" rx="3.1" /></clipPath>
+              <clipPath id="cdfNavBar"><rect width="64" height="14" rx="3.1" /></clipPath>
             </defs>
             <rect width="64" height="14" rx="3.1" fill="#f5b73d" />
-            <g clipPath={`url(#${clipId})`} fill="#181020">
+            <g clipPath="url(#cdfNavBar)" fill="#181020">
               <polygon points="1.28,14 6.61,14 13.61,0 8.28,0" />
               <polygon points="11.95,14 17.28,14 24.28,0 18.95,0" />
               <polygon points="22.61,14 27.95,14 34.95,0 29.61,0" />
@@ -107,18 +68,18 @@ function ClapMark({ size = 26 }) {
   );
 }
 
-function BottomNav({ isAdmin, logout, homeActive, adminActive }) {
+function BottomNav({ isAdmin, logout }) {
   return (
     <nav className="bottom-nav" aria-label="Navegação principal">
-      <Link to="/" className={`bottom-nav-item ${homeActive ? 'active' : ''}`}>
-        <IconHome />
-        <span>Início</span>
-      </Link>
+      <NavLink to="/" end className="bottom-nav-item">
+        <IconSeasons />
+        <span>Temporadas</span>
+      </NavLink>
       {isAdmin && (
-        <Link to="/admin" className={`bottom-nav-item ${adminActive ? 'active' : ''}`}>
+        <NavLink to="/admin" className="bottom-nav-item">
           <IconAdmin />
           <span>Admin</span>
-        </Link>
+        </NavLink>
       )}
       <button type="button" className="bottom-nav-item" onClick={logout}>
         <IconLogout />
@@ -134,12 +95,11 @@ const iconProps = {
   stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round',
 };
 
-function IconHome() {
+function IconSeasons() {
   return (
     <svg {...iconProps} aria-hidden="true">
-      <path d="M3 10.5 12 4l9 6.5" />
-      <path d="M5 9.5V19a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5" />
-      <path d="M9.5 20v-6h5v6" />
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M3 9h18M8 4v5M16 4v5M8 20v-5M16 20v-5" />
     </svg>
   );
 }
