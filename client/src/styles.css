@@ -190,6 +190,36 @@ a:hover { color: var(--purple); }
   .container { padding-bottom: calc(var(--bottom-nav-h) + var(--safe-bottom) + 1.5rem); }
 }
 
+/* ── UPDATE BANNER ───────────────────────────────────── */
+.update-banner {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(1rem + var(--safe-bottom));
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: calc(100vw - 2rem);
+  padding: 0.45rem 0.45rem 0.45rem 1rem;
+  background: var(--surface-3);
+  border: 1px solid var(--border-bright);
+  border-radius: 999px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  font-size: 0.85rem;
+  font-weight: 500;
+  animation: slide-up 0.25s ease;
+}
+.update-banner .btn { min-height: 36px; padding: 0.35rem 0.95rem; }
+@keyframes slide-up {
+  from { opacity: 0; transform: translate(-50%, 0.5rem); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+/* Keep it clear of the fixed bottom nav on mobile */
+@media (max-width: 640px) {
+  .update-banner { bottom: calc(var(--bottom-nav-h) + var(--safe-bottom) + 0.75rem); }
+}
+
 /* ── UTILITIES ───────────────────────────────────────── */
 .muted { color: var(--muted); font-size: 0.875rem; }
 .error { color: var(--danger); font-size: 0.85rem; }

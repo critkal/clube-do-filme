@@ -1,6 +1,7 @@
 import { useEffect, useState, createContext, useContext, useCallback } from 'react';
 import { Routes, Route, Navigate, Link } from 'react-router-dom';
 import { api } from './api.js';
+import useAppUpdate from './useAppUpdate.js';
 import Nav from './components/Nav.jsx';
 import Login from './pages/Login.jsx';
 import Home from './pages/Home.jsx';
@@ -17,6 +18,7 @@ export const useAuth = () => useContext(AuthCtx);
 export default function App() {
   const [me, setMe] = useState(null);
   const [loading, setLoading] = useState(true);
+  const updateReady = useAppUpdate();
 
   const refreshMe = useCallback(async () => {
     try {
@@ -54,6 +56,14 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
+      {updateReady && (
+        <div className="update-banner" role="status">
+          <span>Nova versão disponível</span>
+          <button className="btn primary" onClick={() => window.location.reload()}>
+            Atualizar
+          </button>
+        </div>
+      )}
     </AuthCtx.Provider>
   );
 }
