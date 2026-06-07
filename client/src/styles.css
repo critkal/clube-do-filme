@@ -24,6 +24,9 @@
   --radius: 14px;
   --radius-sm: 9px;
   --nav-h: 56px;
+  --bottom-nav-h: 60px;
+  --tap: 44px; /* minimum comfortable touch target */
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 * { box-sizing: border-box; }
@@ -258,15 +261,18 @@ button, .btn {
   font-size: 0.875rem;
   font-weight: 500;
   white-space: nowrap;
-  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s, filter 0.15s;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s, filter 0.15s, transform 0.08s;
   -webkit-tap-highlight-color: transparent;
-  min-height: 42px;
+  touch-action: manipulation;
+  min-height: var(--tap);
   text-decoration: none;
 }
 button:hover:not(:disabled), .btn:hover {
   border-color: var(--blue);
   background: var(--surface-3);
 }
+/* Touch devices have no hover — give a tactile press state instead */
+button:active:not(:disabled), .btn:active { transform: scale(0.97); }
 button:disabled { opacity: 0.45; cursor: not-allowed; }
 button.danger:disabled { cursor: wait; opacity: 0.65; }
 
@@ -305,8 +311,8 @@ button.link-btn {
   background: transparent;
   border: 1px solid transparent;
   color: var(--blue);
-  padding: 0.2rem 0.55rem;
-  min-height: 30px;
+  padding: 0.4rem 0.6rem;
+  min-height: 36px;
   font-size: 0.82rem;
   font-weight: 500;
   border-radius: 6px;
@@ -352,19 +358,20 @@ button.link-inline:hover { color: var(--danger); }
 .back-link:hover { color: var(--text); }
 
 /* ── FORMS ───────────────────────────────────────────── */
-input, select {
+input, select, textarea {
   background: var(--surface-2);
   color: var(--text);
   border: 1px solid var(--border-bright);
   border-radius: var(--radius-sm);
   padding: 0.6rem 0.8rem;
   font-family: 'DM Sans', sans-serif;
-  font-size: 0.9rem;
+  /* 16px keeps iOS Safari from auto-zooming the viewport on focus */
+  font-size: 16px;
   width: 100%;
   transition: border-color 0.15s, box-shadow 0.15s;
-  min-height: 44px;
+  min-height: var(--tap);
 }
-input:focus, select:focus {
+input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: var(--blue);
   box-shadow: 0 0 0 3px rgba(79, 142, 247, 0.14);

@@ -188,7 +188,6 @@ export default function Vote() {
                 placeholder="Nova categoria…"
                 value={newCatName}
                 onChange={(e) => setNewCatName(e.target.value)}
-                style={{ fontSize: '0.85rem' }}
               />
               <button type="submit" disabled={!newCatName.trim()} style={{ flexShrink: 0, fontSize: '0.85rem' }}>
                 Adicionar
@@ -206,7 +205,7 @@ export default function Vote() {
               onChange={(e) => setComment(e.target.value)}
               placeholder="Deixe uma observação privada para o anfitrião da temporada…"
               rows={3}
-              style={{ width: '100%', boxSizing: 'border-box', resize: 'vertical', fontSize: '0.875rem' }}
+              style={{ width: '100%', boxSizing: 'border-box', resize: 'vertical' }}
             />
             <p className="muted" style={{ margin: '0.3rem 0 0', fontSize: '0.75rem' }}>
               Visível apenas ao anfitrião da temporada.

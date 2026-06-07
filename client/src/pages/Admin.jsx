@@ -187,7 +187,7 @@ function MembersSection({ members, ctx }) {
                       placeholder="Nova senha (mín. 6 caracteres)"
                       value={pwdValue}
                       onChange={(e) => setPwdValue(e.target.value)}
-                      style={{ flex: 1, fontSize: '0.85rem' }}
+                      style={{ flex: 1 }}
                       autoFocus
                     />
                     <button onClick={savePassword} disabled={pwdValue.trim().length < 6 || pwdSaving} style={{ flexShrink: 0, fontSize: '0.85rem' }}>
@@ -250,7 +250,7 @@ function SeasonsSection({ seasons, members, ctx }) {
       <form onSubmit={create} className="stack" style={{ marginBottom: '0.75rem', gap: '0.5rem' }}>
         <div className="row gap">
           <input placeholder="Nome (opcional)" value={name} onChange={(e) => setName(e.target.value)} style={{ flex: 2 }} />
-          <select value={hostId} onChange={(e) => setHostId(e.target.value)} style={{ flex: 1, fontSize: '0.85rem' }}>
+          <select value={hostId} onChange={(e) => setHostId(e.target.value)} style={{ flex: 1 }}>
             <option value="">Host (padrão: você)</option>
             {members.map((m) => (
               <option key={m.id} value={m.id}>{m.first_name}</option>

@@ -410,7 +410,7 @@ function AddMovieForm({ seasonId, onDone }) {
                 value={synopsis}
                 onChange={(e) => setSynopsis(e.target.value)}
                 rows={3}
-                style={{ resize: 'vertical', fontFamily: 'inherit', fontSize: '0.9rem', padding: '0.6rem 0.8rem', background: 'var(--surface-2)', color: 'var(--text)', border: '1px solid var(--border-bright)', borderRadius: 'var(--radius-sm)', width: '100%' }}
+                style={{ resize: 'vertical', fontFamily: 'inherit' }}
               />
             </label>
           )}
