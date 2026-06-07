@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { api } from '../api.js';
 import { useAuth } from '../App.jsx';
 import MoviePoster from '../components/MoviePoster.jsx';
@@ -7,7 +7,6 @@ import MoviePoster from '../components/MoviePoster.jsx';
 export default function Season() {
   const { id } = useParams();
   const { me } = useAuth();
-  const navigate = useNavigate();
   const [seasons, setSeasons] = useState([]);
   const [movies, setMovies] = useState([]);
   const [members, setMembers] = useState([]);
@@ -42,7 +41,7 @@ export default function Season() {
 
   return (
     <div className="stack">
-      <button type="button" className="link back-link" onClick={() => navigate(-1)}>← Temporadas</button>
+      <Link to="/seasons" className="back-link">← Temporadas</Link>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', flexWrap: 'wrap' }}>
         <div>

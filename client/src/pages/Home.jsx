@@ -1,80 +1,23 @@
 import { useEffect, useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { api } from '../api.js';
 
+// "Início": always lands the user on the active season. If there is none,
+// falls back to the full seasons list (which does not redirect).
 export default function Home() {
-  const [seasons, setSeasons] = useState(null);
+  const [target, setTarget] = useState(null);
   const [err, setErr] = useState('');
 
   useEffect(() => {
-    api.seasons().then(setSeasons).catch((e) => setErr(e.message));
+    api.seasons()
+      .then((seasons) => {
+        const active = seasons.find((s) => s.status === 'active');
+        setTarget(active ? `/seasons/${active.id}` : '/seasons');
+      })
+      .catch((e) => setErr(e.message));
   }, []);
 
   if (err) return <p className="error">Erro: {err}</p>;
-  if (seasons === null) return <p className="loading">Carregando…</p>;
-
-  const active = seasons.find((s) => s.status === 'active');
-  if (active) return <Navigate to={`/seasons/${active.id}`} replace />;
-
-  const past = seasons.filter((s) => s.status !== 'active');
-
-  return (
-    <div className="stack">
-      <h1>Temporadas</h1>
-      <p className="muted">Nenhuma temporada ativa. Um admin pode criar uma nova.</p>
-      {past.length > 0 && (
-        <>
-          <div className="section-header" style={{ marginTop: '0.5rem' }}>
-            <h2>Encerradas</h2>
-          </div>
-          <ul className="list">
-            {past.map((s) => (
-              <li key={s.id}><SeasonCard s={s} /></li>
-            ))}
-          </ul>
-        </>
-      )}
-    </div>
-  );
-}
-
-function SeasonCard({ s }) {
-  const navigate = useNavigate();
-  const title = s.name || `Temporada #${s.id}`;
-  const isPresented = s.status === 'presented';
-  const progress = s.rounds > 0 ? Math.round((s.movies_added / s.rounds) * 100) : 0;
-  const hasActions = s.status === 'completed' || isPresented;
-
-  return (
-    <div
-      className="card season-card"
-      onClick={() => navigate(`/seasons/${s.id}`)}
-      role="link"
-      tabIndex={0}
-      onKeyDown={(e) => e.key === 'Enter' && navigate(`/seasons/${s.id}`)}
-    >
-      <div className="season-card-header">
-        <div className="season-card-title-row">
-          <span className="season-card-title">{title}</span>
-          <span className={`status-pill ${isPresented ? 'presented' : 'closed'}`}>
-            {isPresented ? 'apresentada' : 'encerrada'}
-          </span>
-        </div>
-        <div className="season-progress-track">
-          <div className="season-progress-fill" style={{ width: `${progress}%` }} />
-        </div>
-        <p className="season-progress-label">{s.movies_added} de {s.rounds} filmes adicionados</p>
-      </div>
-      {hasActions && (
-        <div className="season-card-actions" onClick={(e) => e.stopPropagation()}>
-          <Link to={`/seasons/${s.id}/final-voting`} className="btn" style={{ fontSize: '0.82rem', minHeight: '36px', padding: '0.4rem 0.85rem' }}>
-            Votação final
-          </Link>
-          <Link to={`/seasons/${s.id}/results`} className="btn" style={{ fontSize: '0.82rem', minHeight: '36px', padding: '0.4rem 0.85rem' }}>
-            Resultados
-          </Link>
-        </div>
-      )}
-    </div>
-  );
+  if (!target) return <p className="loading">Carregando…</p>;
+  return <Navigate to={target} replace />;
 }

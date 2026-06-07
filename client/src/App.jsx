@@ -5,6 +5,7 @@ import useAppUpdate from './useAppUpdate.js';
 import Nav from './components/Nav.jsx';
 import Login from './pages/Login.jsx';
 import Home from './pages/Home.jsx';
+import Seasons from './pages/Seasons.jsx';
 import Season from './pages/Season.jsx';
 import Movie from './pages/Movie.jsx';
 import Vote from './pages/Vote.jsx';
@@ -47,6 +48,7 @@ export default function App() {
         <Routes>
           <Route path="/login" element={me ? <Navigate to="/" replace /> : <Login />} />
           <Route path="/" element={<Protected me={me}><Home /></Protected>} />
+          <Route path="/seasons" element={<Protected me={me}><Seasons /></Protected>} />
           <Route path="/seasons/:id" element={<Protected me={me}><Season /></Protected>} />
           <Route path="/seasons/:id/final-voting" element={<Protected me={me}><FinalVoting /></Protected>} />
           <Route path="/seasons/:id/results" element={<Protected me={me}><Results /></Protected>} />

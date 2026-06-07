@@ -1,8 +1,13 @@
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../App.jsx';
 
 export default function Nav() {
   const { me, logout } = useAuth();
+  const { pathname } = useLocation();
+  // "/" redirects, so highlight Início across the whole season/movie flow.
+  const homeActive = pathname === '/' || pathname.startsWith('/seasons') || pathname.startsWith('/movies');
+  const adminActive = pathname.startsWith('/admin');
+
   return (
     <>
       <header className="nav">
@@ -12,8 +17,8 @@ export default function Nav() {
             <>
               {/* Desktop: inline links. Hidden on mobile, replaced by the bottom bar. */}
               <nav className="nav-desktop">
-                <NavLink to="/" end>Temporadas</NavLink>
-                {me.is_admin && <NavLink to="/admin">Admin</NavLink>}
+                <Link to="/" className={homeActive ? 'active' : ''}>Início</Link>
+                {me.is_admin && <Link to="/admin" className={adminActive ? 'active' : ''}>Admin</Link>}
                 <span className="nav-divider" />
                 <span className="nav-user">{me.first_name}</span>
                 <span className="nav-divider" />
@@ -31,23 +36,30 @@ export default function Nav() {
         </div>
       </header>
 
-      {me && <BottomNav isAdmin={me.is_admin} logout={logout} />}
+      {me && (
+        <BottomNav
+          isAdmin={me.is_admin}
+          logout={logout}
+          homeActive={homeActive}
+          adminActive={adminActive}
+        />
+      )}
     </>
   );
 }
 
-function BottomNav({ isAdmin, logout }) {
+function BottomNav({ isAdmin, logout, homeActive, adminActive }) {
   return (
     <nav className="bottom-nav" aria-label="Navegação principal">
-      <NavLink to="/" end className="bottom-nav-item">
-        <IconSeasons />
-        <span>Temporadas</span>
-      </NavLink>
+      <Link to="/" className={`bottom-nav-item ${homeActive ? 'active' : ''}`}>
+        <IconHome />
+        <span>Início</span>
+      </Link>
       {isAdmin && (
-        <NavLink to="/admin" className="bottom-nav-item">
+        <Link to="/admin" className={`bottom-nav-item ${adminActive ? 'active' : ''}`}>
           <IconAdmin />
           <span>Admin</span>
-        </NavLink>
+        </Link>
       )}
       <button type="button" className="bottom-nav-item" onClick={logout}>
         <IconLogout />
@@ -63,11 +75,12 @@ const iconProps = {
   stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round',
 };
 
-function IconSeasons() {
+function IconHome() {
   return (
     <svg {...iconProps} aria-hidden="true">
-      <rect x="3" y="4" width="18" height="16" rx="2" />
-      <path d="M3 9h18M8 4v5M16 4v5M8 20v-5M16 20v-5" />
+      <path d="M3 10.5 12 4l9 6.5" />
+      <path d="M5 9.5V19a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5" />
+      <path d="M9.5 20v-6h5v6" />
     </svg>
   );
 }
