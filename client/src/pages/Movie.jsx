@@ -103,8 +103,7 @@ export default function Movie() {
               <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                 <Link
                   to={`/movies/${id}/vote`}
-                  className="btn"
-                  style={{ fontSize: '0.85rem' }}
+                  className={`btn ${movie.your_score ? '' : 'primary'}`}
                 >
                   {movie.your_score ? 'Editar avaliação' : 'Avaliar'}
                 </Link>
