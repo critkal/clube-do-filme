@@ -359,32 +359,32 @@ function AddMovieForm({ seasonId, onDone }) {
                   buscando…
                 </span>
               )}
+
+              {showSuggestions && suggestions.length > 0 && (
+                <ul className="tmdb-suggestions">
+                  {suggestions.map((s) => (
+                    <li key={s.tmdb_id}>
+                      <button type="button" className="tmdb-suggestion-btn" onMouseDown={() => pickSuggestion(s)}>
+                        {s.poster_thumb
+                          ? <img src={s.poster_thumb} alt={s.title} className="tmdb-thumb" />
+                          : <div className="tmdb-thumb tmdb-thumb-placeholder">🎬</div>
+                        }
+                        <span className="tmdb-suggestion-info">
+                          <span className="tmdb-suggestion-title">{s.title}</span>
+                          {s.year && <span className="tmdb-suggestion-year">{s.year}</span>}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                  <li>
+                    <button type="button" className="tmdb-manual-btn" onMouseDown={goManual}>
+                      Não encontrei meu filme — cadastrar manualmente
+                    </button>
+                  </li>
+                </ul>
+              )}
             </div>
           </label>
-
-          {showSuggestions && suggestions.length > 0 && (
-            <ul className="tmdb-suggestions">
-              {suggestions.map((s) => (
-                <li key={s.tmdb_id}>
-                  <button type="button" className="tmdb-suggestion-btn" onMouseDown={() => pickSuggestion(s)}>
-                    {s.poster_thumb
-                      ? <img src={s.poster_thumb} alt={s.title} className="tmdb-thumb" />
-                      : <div className="tmdb-thumb tmdb-thumb-placeholder">🎬</div>
-                    }
-                    <span className="tmdb-suggestion-info">
-                      <span className="tmdb-suggestion-title">{s.title}</span>
-                      {s.year && <span className="tmdb-suggestion-year">{s.year}</span>}
-                    </span>
-                  </button>
-                </li>
-              ))}
-              <li>
-                <button type="button" className="tmdb-manual-btn" onMouseDown={goManual}>
-                  Não encontrei meu filme — cadastrar manualmente
-                </button>
-              </li>
-            </ul>
-          )}
 
           {loadingDetails && <p className="muted" style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>Carregando detalhes…</p>}
         </div>

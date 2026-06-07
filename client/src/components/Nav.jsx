@@ -1,6 +1,8 @@
-import { useId } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../App.jsx';
+
+const LOGOUT_CONFIRM_MS = 2500;
 
 export default function Nav() {
   const { me, logout } = useAuth();
@@ -8,6 +10,23 @@ export default function Nav() {
   // "/" redirects, so highlight Início across the whole season/movie flow.
   const homeActive = pathname === '/' || pathname.startsWith('/seasons') || pathname.startsWith('/movies');
   const adminActive = pathname.startsWith('/admin');
+
+  // Tap-to-arm, tap-again-to-confirm — an inline alternative to window.confirm()
+  // that works the same on touch and pointer devices.
+  const [logoutArmed, setLogoutArmed] = useState(false);
+  const armTimer = useRef(null);
+  useEffect(() => () => clearTimeout(armTimer.current), []);
+
+  function handleLogoutClick() {
+    if (logoutArmed) {
+      clearTimeout(armTimer.current);
+      setLogoutArmed(false);
+      logout();
+      return;
+    }
+    setLogoutArmed(true);
+    armTimer.current = setTimeout(() => setLogoutArmed(false), LOGOUT_CONFIRM_MS);
+  }
 
   return (
     <>
@@ -41,8 +60,13 @@ export default function Nav() {
           </nav>
           <div className="sidebar-footer">
             <span className="nav-user">{me.first_name}</span>
-            <button type="button" className="sidebar-item sidebar-logout" onClick={logout}>
-              <IconLogout /><span>Sair</span>
+            <button
+              type="button"
+              className={`sidebar-item sidebar-logout ${logoutArmed ? 'confirm' : ''}`}
+              onClick={handleLogoutClick}
+              onBlur={() => setLogoutArmed(false)}
+            >
+              <IconLogout /><span>{logoutArmed ? 'Confirmar saída?' : 'Sair'}</span>
             </button>
           </div>
         </aside>
@@ -51,7 +75,8 @@ export default function Nav() {
       {me && (
         <BottomNav
           isAdmin={me.is_admin}
-          logout={logout}
+          logoutArmed={logoutArmed}
+          onLogoutClick={handleLogoutClick}
           homeActive={homeActive}
           adminActive={adminActive}
         />
@@ -90,7 +115,7 @@ function ClapMark({ size = 26 }) {
   );
 }
 
-function BottomNav({ isAdmin, logout, homeActive, adminActive }) {
+function BottomNav({ isAdmin, logoutArmed, onLogoutClick, homeActive, adminActive }) {
   return (
     <nav className="bottom-nav" aria-label="Navegação principal">
       <Link to="/" className={`bottom-nav-item ${homeActive ? 'active' : ''}`}>
@@ -103,9 +128,13 @@ function BottomNav({ isAdmin, logout, homeActive, adminActive }) {
           <span>Admin</span>
         </Link>
       )}
-      <button type="button" className="bottom-nav-item" onClick={logout}>
+      <button
+        type="button"
+        className={`bottom-nav-item ${logoutArmed ? 'confirm' : ''}`}
+        onClick={onLogoutClick}
+      >
         <IconLogout />
-        <span>Sair</span>
+        <span>{logoutArmed ? 'Confirmar' : 'Sair'}</span>
       </button>
     </nav>
   );
