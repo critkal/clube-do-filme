@@ -95,14 +95,22 @@ export default function Season() {
                         <span> · {new Date(m.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                       )}
                     </p>
-                    {m.rating_count > 0 ? (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.85rem' }}>
-                        <span style={{ color: 'var(--amber)', fontWeight: 600 }}>★ {m.average_rating.toFixed(1)}</span>
-                        <span className="muted">· {m.rating_count} nota{m.rating_count > 1 ? 's' : ''}</span>
-                      </span>
-                    ) : (
-                      <span className="muted" style={{ fontSize: '0.82rem' }}>sem notas ainda</span>
-                    )}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.25rem 0.6rem', fontSize: '0.85rem' }}>
+                      {m.presenter_id === me.id ? (
+                        <span className="your-rating none">Seu filme</span>
+                      ) : m.your_score != null ? (
+                        <span className="your-rating">
+                          Sua nota <strong>★ {m.your_score}/10</strong>
+                        </span>
+                      ) : (
+                        <span className="your-rating none">Você ainda não avaliou</span>
+                      )}
+                      {m.rating_count > 0 && (
+                        <span className="muted" style={{ fontSize: '0.8rem' }}>
+                          · média ★ {m.average_rating.toFixed(1)} ({m.rating_count})
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </Link>
               </li>
