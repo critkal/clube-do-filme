@@ -8,6 +8,17 @@ Monorepo with two independent workspaces: `client/` (React SPA) and `server/` (E
 
 ---
 
+## ⚠️ Read the Architecture Docs First
+
+Before writing any code, read the architecture guide for the side you're touching. These define the conventions you **must** follow so the codebase stays consistent — this file is a map, the architecture docs are the rules.
+
+- **Backend / `server/`** → [server/ARCHITECTURE.md](server/ARCHITECTURE.md)
+- **Frontend / `client/`** → [client/ARCHITECTURE.md](client/ARCHITECTURE.md)
+
+> Note: `server/src/db.js` is the single source of truth for the DB schema. If the table list below ever disagrees with `db.js`, trust `db.js`.
+
+---
+
 ## Tech Stack
 
 | Layer | Technology |
