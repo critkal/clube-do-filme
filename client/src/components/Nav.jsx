@@ -37,6 +37,28 @@ export default function Nav() {
       </header>
 
       {me && (
+        <aside className="sidebar">
+          <Link to="/" className="brand sidebar-brand">Clube do Filme</Link>
+          <nav className="sidebar-nav" aria-label="Navegação principal">
+            <Link to="/" className={`sidebar-item ${homeActive ? 'active' : ''}`}>
+              <IconHome /><span>Início</span>
+            </Link>
+            {me.is_admin && (
+              <Link to="/admin" className={`sidebar-item ${adminActive ? 'active' : ''}`}>
+                <IconAdmin /><span>Admin</span>
+              </Link>
+            )}
+          </nav>
+          <div className="sidebar-footer">
+            <span className="nav-user">{me.first_name}</span>
+            <button type="button" className="sidebar-item sidebar-logout" onClick={logout}>
+              <IconLogout /><span>Sair</span>
+            </button>
+          </div>
+        </aside>
+      )}
+
+      {me && (
         <BottomNav
           isAdmin={me.is_admin}
           logout={logout}

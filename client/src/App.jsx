@@ -34,6 +34,11 @@ export default function App() {
 
   useEffect(() => { refreshMe(); }, [refreshMe]);
 
+  // Drives the desktop sidebar layout (content offset + hiding mobile chrome).
+  useEffect(() => {
+    document.body.classList.toggle('app-authed', !!me);
+  }, [me]);
+
   if (loading) return <div className="container"><p className="loading">Carregando…</p></div>;
 
   const logout = async () => {
