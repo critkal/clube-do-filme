@@ -147,6 +147,49 @@ a:hover { color: var(--purple); }
 }
 .nav-logout:hover { background: var(--surface-2) !important; color: var(--danger) !important; }
 
+/* ── BOTTOM NAV (mobile) ─────────────────────────────── */
+.nav-user-mobile { display: none; }
+.bottom-nav { display: none; }
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  min-height: auto;
+  padding: 0.4rem 0.2rem;
+  text-decoration: none;
+}
+.bottom-nav-item.active { color: var(--blue); }
+.bottom-nav-item:active:not(:disabled) { transform: none; background: var(--surface-2); }
+
+@media (max-width: 640px) {
+  .nav-desktop { display: none; }
+  .nav-user-mobile { display: inline; }
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 100;
+    height: calc(var(--bottom-nav-h) + var(--safe-bottom));
+    padding-bottom: var(--safe-bottom);
+    background: rgba(7, 9, 18, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid var(--border);
+  }
+  /* Keep page content clear of the fixed bottom bar */
+  .container { padding-bottom: calc(var(--bottom-nav-h) + var(--safe-bottom) + 1.5rem); }
+}
+
 /* ── UTILITIES ───────────────────────────────────────── */
 .muted { color: var(--muted); font-size: 0.875rem; }
 .error { color: var(--danger); font-size: 0.85rem; }
