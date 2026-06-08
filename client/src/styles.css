@@ -73,6 +73,11 @@ a { color: var(--gold); text-decoration: none; transition: color 0.15s; }
 a:hover { color: var(--velvet); }
 
 .container {
+  /* #root is a flex column, and auto cross-axis margins on a flex item
+     override "stretch" sizing — without an explicit width, .container
+     would shrink-wrap to its content's max-content size (varying per
+     page) instead of consistently filling up to max-width. */
+  width: 100%;
   max-width: 720px;
   margin: 0 auto;
   padding: 1.25rem 1rem 2rem;
