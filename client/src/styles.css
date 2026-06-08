@@ -89,6 +89,10 @@ a:hover { color: var(--velvet); }
   top: 0;
   z-index: 100;
   height: var(--nav-h);
+  /* #root is a fixed-height (100%) flex column; without this the header
+     gets squeezed below its declared height when a page (e.g. Login) asks
+     for the full remaining viewport height. */
+  flex-shrink: 0;
   background: rgba(7, 9, 18, 0.82);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
