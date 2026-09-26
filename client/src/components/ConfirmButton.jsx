@@ -11,7 +11,9 @@ import { useEffect, useRef, useState } from 'react';
  *  - question: confirmation prompt (default "Confirmar?")
  *  - busy / busyLabel: show a pending state while the action runs
  *  - disabled
+ *  - tone: "danger" (default) or "neutral" for the confirm button's color
  *
+ * The prompt closes once onConfirm settles, whether it succeeded or failed.
  * Arming moves focus to "Não" so a stray Enter can't confirm; Escape cancels
  * and returns focus to the trigger.
  */
@@ -23,6 +25,7 @@ export default function ConfirmButton({
   busy = false,
   busyLabel = 'Aguarde…',
   disabled = false,
+  tone = 'danger',
 }) {
   const [armed, setArmed] = useState(false);
   const triggerRef = useRef(null);
@@ -53,9 +56,11 @@ export default function ConfirmButton({
       <span className="confirm-inline-q" aria-live="polite">{question}</span>
       <button
         type="button"
-        className="link-btn danger"
+        className={tone === 'danger' ? 'link-btn danger' : 'link-btn'}
         disabled={busy}
-        onClick={() => onConfirm()}
+        onClick={async () => {
+          try { await onConfirm(); } finally { setArmed(false); }
+        }}
       >
         {busy ? busyLabel : 'Sim'}
       </button>
