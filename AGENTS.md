@@ -121,7 +121,7 @@ GET    /movies/:id                   # Movie detail + ratings
 POST   /movies                       # Add movie (admin)
 PUT    /movies/:id                   # Edit movie (admin)
 DELETE /movies/:id                   # Delete movie (admin)
-POST   /movies/:id/rate              # Rate movie { score: 1-5 }
+POST   /movies/:id/rate              # Rate movie { score: 1-10 }
 POST   /movies/:id/nominate          # Nominate in category
 POST   /movies/:id/attendance        # Mark presence { member_id? (admin only) }
 DELETE /movies/:id/attendance        # Unmark presence ?member_id= (admin only)
