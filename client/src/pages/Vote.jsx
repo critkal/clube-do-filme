@@ -15,8 +15,11 @@ export default function Vote() {
   const [comment, setComment] = useState('');
   const [selectedCatIds, setSelectedCatIds] = useState(new Set());
   const [newCatName, setNewCatName] = useState('');
+  const [addingCat, setAddingCat] = useState(false);
+  const [catErr, setCatErr] = useState('');
   const [saving, setSaving] = useState(false);
-  const [err, setErr] = useState('');
+  const [loadErr, setLoadErr] = useState('');
+  const [saveErr, setSaveErr] = useState('');
 
   useEffect(() => {
     Promise.all([api.movie(id), api.categories()]).then(([m, cats]) => {
@@ -27,10 +30,10 @@ export default function Vote() {
       setSelectedCatIds(
         new Set(m.referrals.filter((r) => r.you_referred).map((r) => r.category_id)),
       );
-    }).catch((e) => setErr(e.message));
+    }).catch((e) => setLoadErr(e.message));
   }, [id]);
 
-  if (err) return <p className="error">Erro: {err}</p>;
+  if (loadErr) return <p className="error">Erro: {loadErr}</p>;
   if (!movie) return <p className="loading">Carregando…</p>;
 
   const isPresenter = movie.presenter_id === me.id;
@@ -38,17 +41,18 @@ export default function Vote() {
     return (
       <div className="stack">
         <Link to={`/movies/${id}`} className="back-link">← {movie.title}</Link>
-        <div className="card">
-          <p className="muted">Você apresentou este filme — não pode avaliá-lo.</p>
+        <div className="card vote-blocked">
+          <p>Você apresentou este filme, então não pode avaliá-lo.</p>
+          <Link to={`/movies/${id}`} className="btn">Voltar ao filme</Link>
         </div>
       </div>
     );
   }
 
-  // Referral counts by category id (from movie.referrals, includes categories with referrals)
   const refCountById = Object.fromEntries(
     movie.referrals.map((r) => [r.category_id, r.count]),
   );
+  const alreadyRated = Boolean(movie.your_score);
 
   function toggleCat(catId) {
     setSelectedCatIds((prev) => {
@@ -59,33 +63,35 @@ export default function Vote() {
     });
   }
 
-  async function addNewCategory(e) {
-    e?.preventDefault();
+  function selectCat(cat) {
+    setSelectedCatIds((prev) => new Set([...prev, cat.id]));
+    setNewCatName('');
+  }
+
+  async function addNewCategory() {
     const name = newCatName.trim();
     if (!name) return;
+    setCatErr('');
     const existing = allCats.find((c) => c.name.toLowerCase() === name.toLowerCase());
-    if (existing) {
-      setSelectedCatIds((prev) => new Set([...prev, existing.id]));
-      setNewCatName('');
-      return;
-    }
+    if (existing) { selectCat(existing); return; }
+    setAddingCat(true);
     try {
       const c = await api.createCategory(name);
       setAllCats((prev) => [...prev, { id: c.id, name }].sort((a, b) => a.name.localeCompare(b.name)));
-      setSelectedCatIds((prev) => new Set([...prev, c.id]));
-      setNewCatName('');
+      selectCat({ id: c.id });
     } catch (error) {
       if (error.message === 'category_exists') {
-        const fresh = await api.categories();
+        const fresh = await api.categories().catch(() => []);
         const found = fresh.find((c) => c.name.toLowerCase() === name.toLowerCase());
         if (found) {
           setAllCats(fresh);
-          setSelectedCatIds((prev) => new Set([...prev, found.id]));
-          setNewCatName('');
+          selectCat(found);
+          return;
         }
-      } else {
-        setErr(error.message);
       }
+      setCatErr(`Não foi possível criar a categoria (${error.message}).`);
+    } finally {
+      setAddingCat(false);
     }
   }
 
@@ -93,10 +99,10 @@ export default function Vote() {
     e.preventDefault();
     if (!score) return;
     setSaving(true);
+    setSaveErr('');
     try {
       await api.rate(movie.id, score, comment.trim() || null);
 
-      // Sync referrals: add newly selected, remove deselected
       const currentlyReferred = new Set(
         movie.referrals.filter((r) => r.you_referred).map((r) => r.category_id),
       );
@@ -109,7 +115,7 @@ export default function Vote() {
 
       navigate(`/movies/${id}`);
     } catch (error) {
-      setErr(error.message);
+      setSaveErr(`Não foi possível salvar sua avaliação (${error.message}). Tente novamente.`);
       setSaving(false);
     }
   }
@@ -119,46 +125,45 @@ export default function Vote() {
       <Link to={`/movies/${id}`} className="back-link">← {movie.title}</Link>
 
       <div className="card">
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-          {movie.poster_url && (
-            <div style={{ flexShrink: 0 }}>
-              <MoviePoster src={movie.poster_url} alt={movie.title} size="sm" />
-            </div>
-          )}
-          <div>
-            <h2 style={{ margin: '0 0 0.2rem' }}>{movie.title}</h2>
-            {movie.year && (
-              <span className="muted" style={{ fontSize: '0.9rem' }}>({movie.year})</span>
-            )}
-            <p className="muted" style={{ margin: '0.35rem 0 0', fontSize: '0.82rem' }}>
-              Apresentado por{' '}
-              <strong style={{ color: 'var(--text)' }}>{movie.presenter_name}</strong>
+        <div className="vote-movie">
+          <MoviePoster src={movie.poster_url} alt={movie.title} size="sm" />
+          <div className="vote-movie-info">
+            <h1 className="vote-movie-title">
+              {movie.title}
+              {movie.year && <span className="muted"> ({movie.year})</span>}
+            </h1>
+            <p className="muted">
+              Apresentado por <strong>{movie.presenter_name}</strong>
             </p>
+            {alreadyRated && (
+              <p className="vote-status">Você já avaliou — pode alterar abaixo.</p>
+            )}
           </div>
         </div>
 
-        <form onSubmit={submit} className="stack" style={{ gap: '1.5rem' }}>
-
-          {/* Rating */}
-          <div>
-            <p className="form-label">Sua nota (1–10)</p>
+        <form onSubmit={submit} className="stack vote-form">
+          <fieldset className="vote-step">
+            <legend className="vote-step-head">
+              <span className="form-label">Sua nota</span>
+              <span className={`vote-score ${score ? '' : 'empty'}`} aria-live="polite">
+                {score ? <><strong>{score}</strong>/10</> : 'escolha de 1 a 10'}
+              </span>
+            </legend>
             <StarRating value={score} onChange={setScore} />
-            {score > 0 && (
-              <p className="muted" style={{ margin: '0.5rem 0 0', fontSize: '0.8rem' }}>
-                Nota selecionada:{' '}
-                <strong style={{ color: 'var(--amber)' }}>{score}/10</strong>
-              </p>
-            )}
-          </div>
+          </fieldset>
 
-          {/* Category referrals */}
-          <div>
-            <p className="form-label">Indicar em categorias</p>
-            <p className="muted" style={{ margin: '0 0 0.75rem', fontSize: '0.8rem', lineHeight: 1.5 }}>
-              Selecione as categorias em que este filme deve concorrer. Ao final da temporada, os filmes com mais indicações participam da votação final.
+          <fieldset className="vote-step">
+            <legend className="vote-step-head">
+              <span className="form-label">Indicar em categorias</span>
+              <span className="muted vote-step-aside">
+                {selectedCatIds.size > 0 ? `${selectedCatIds.size} selecionada${selectedCatIds.size > 1 ? 's' : ''}` : 'opcional'}
+              </span>
+            </legend>
+            <p className="muted vote-hint vote-hint-top">
+              Os filmes mais indicados em cada categoria vão para a votação final da temporada.
             </p>
 
-            {allCats.length > 0 && (
+            {allCats.length > 0 ? (
               <div className="cat-checklist">
                 {allCats.map((c) => {
                   const checked = selectedCatIds.has(c.id);
@@ -171,6 +176,7 @@ export default function Vote() {
                       onClick={() => toggleCat(c.id)}
                       aria-pressed={checked}
                     >
+                      <span className="cat-chip-mark" aria-hidden="true">{checked ? '✓' : '+'}</span>
                       {c.name}
                       {count > 0 && (
                         <span className="cat-chip-count">
@@ -181,46 +187,52 @@ export default function Vote() {
                   );
                 })}
               </div>
+            ) : (
+              <p className="muted vote-hint">Nenhuma categoria ainda — crie a primeira abaixo.</p>
             )}
 
             {/* Not a <form>: this lives inside the rating <form>, and nested forms are invalid HTML */}
-            <div className="row gap" style={{ marginTop: '0.65rem' }}>
+            <div className="row gap cat-new">
               <input
                 placeholder="Nova categoria…"
+                aria-label="Nome da nova categoria"
                 value={newCatName}
                 onChange={(e) => setNewCatName(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') { e.preventDefault(); addNewCategory(); }
                 }}
               />
-              <button type="button" onClick={addNewCategory} disabled={!newCatName.trim()} style={{ flexShrink: 0 }}>
-                Adicionar
+              <button type="button" onClick={addNewCategory} disabled={!newCatName.trim() || addingCat}>
+                {addingCat ? 'Criando…' : 'Criar'}
               </button>
             </div>
-          </div>
+            {catErr && <p className="error" role="alert">{catErr}</p>}
+          </fieldset>
 
-          {/* Comment */}
-          <div>
-            <label className="form-label" style={{ display: 'block' }}>
-              Comentário para o anfitrião (opcional)
+          <div className="vote-step">
+            <label htmlFor="vote-comment" className="vote-step-head">
+              <span className="form-label">Comentário para o anfitrião</span>
+              <span className="muted vote-step-aside">opcional</span>
             </label>
             <textarea
+              id="vote-comment"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="Deixe uma observação privada para o anfitrião da temporada…"
+              placeholder="Uma observação privada sobre o filme…"
               rows={3}
-              style={{ width: '100%', boxSizing: 'border-box', resize: 'vertical' }}
+              style={{ resize: 'vertical' }}
             />
-            <p className="muted" style={{ margin: '0.3rem 0 0', fontSize: '0.75rem' }}>
-              Visível apenas ao anfitrião da temporada.
-            </p>
+            <p className="muted vote-hint">Visível apenas ao anfitrião da temporada.</p>
           </div>
 
-          {err && <p className="error">{err}</p>}
+          {saveErr && <p className="error" role="alert">{saveErr}</p>}
 
-          <button type="submit" disabled={!score || saving} className="btn primary">
-            {saving ? 'Salvando…' : movie.your_score ? 'Atualizar avaliação' : 'Confirmar avaliação'}
-          </button>
+          <div className="vote-submit">
+            <button type="submit" disabled={!score || saving} className="btn primary">
+              {saving ? 'Salvando…' : alreadyRated ? 'Atualizar avaliação' : 'Confirmar avaliação'}
+            </button>
+            {!score && <p className="muted vote-hint">Escolha uma nota para confirmar.</p>}
+          </div>
         </form>
       </div>
     </div>
