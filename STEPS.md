@@ -21,7 +21,7 @@
 
 ## ~~3. Cadastrar categorias base~~ ✅
 - ~~Criar seed com as categorias padrão do clube~~ — `initSchema()` insere as categorias padrão com `INSERT OR IGNORE` a cada inicialização
-- Categorias padrão excluídas ou renomeadas no Admin → Categorias voltam a ser criadas no próximo restart do servidor
+- O seed só roda se nenhuma categoria padrão existir, então excluir ou renomear uma no Admin → Categorias é permanente
 
 ---
 
@@ -81,7 +81,7 @@
 
 ---
 
-## 11. Dashboard do host (admin)
+## ~~11. Dashboard do host (admin)~~ ✅
 - Rota `/dashboard` acessível apenas para admin/host
 - Métricas da temporada atual: filmes assistidos, média geral, membro mais ativo, distribuição de notas, progresso da temporada
 - Depende de: tela do filme (✅), lista de membros (✅), presença nas sessões (item 8)

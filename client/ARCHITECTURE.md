@@ -30,7 +30,7 @@ client/src/
 ├── App.jsx               # Route table, AuthCtx provider + useAuth(), <Protected> guard
 ├── api.js                # THE single API client — every backend call lives here
 ├── styles.css            # All styles, global, one file
-├── pages/                # One component per route (Login, Home, Season, Movie, Vote, FinalVoting, Results, Admin)
+├── pages/                # One component per route (Login, Home, Seasons, Season, Movie, Vote, FinalVoting, Results, Admin, Dashboard)
 └── components/           # Small shared, reusable UI pieces (Nav, MoviePoster, StarRating)
 ```
 

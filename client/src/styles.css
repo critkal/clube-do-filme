@@ -865,6 +865,14 @@ select {
 .winner-row .tally-label { color: var(--text); }
 .winner-row .tally-bar-fill { background: var(--gradient); box-shadow: 0 0 8px rgba(245, 183, 61, 0.4); }
 
+/* ── DASHBOARD ───────────────────────────────────────── */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; }
+.stat-tile { display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
+.stat-label { color: var(--muted); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; }
+.stat-value { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; }
+.stat-tile .tally-bar-track { flex: none; }
+.tally-label.dist-label { flex: 0 0 1.5rem; text-align: right; color: var(--muted); }
+
 /* ── LOADING ─────────────────────────────────────────── */
 @keyframes pulse {
   0%, 100% { opacity: 1; }

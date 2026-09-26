@@ -16,6 +16,7 @@ const { moviesRouter, seasonScopedMoviesRouter } = require('./routes/movies');
 const categoryRoutes = require('./routes/categories');
 const adminRoutes = require('./routes/admin');
 const tmdbRoutes = require('./routes/tmdb');
+const dashboardRoutes = require('./routes/dashboard');
 
 const app = express();
 
@@ -52,6 +53,7 @@ app.use('/api/movies', moviesRouter);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/tmdb', tmdbRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Error handler
 // eslint-disable-next-line no-unused-vars

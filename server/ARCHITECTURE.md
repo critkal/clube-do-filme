@@ -36,6 +36,7 @@ server/src/
 │   ├── movies.js         # movie CRUD, ratings, referrals, categories on a movie
 │   ├── categories.js     # global category CRUD
 │   ├── admin.js          # admin-only management endpoints
+│   ├── dashboard.js      # admin-only season metrics (/api/dashboard)
 │   └── tmdb.js           # TMDB proxy
 └── scripts/              # One-off CLI scripts run via npm (init-db, seed, local setup)
 ```

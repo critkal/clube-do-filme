@@ -149,10 +149,18 @@ async function initSchema() {
     try { await db.execute(sql); } catch { /* column already exists */ }
   }
   await migrateRatings();
-  await db.batch(DEFAULT_CATEGORIES.map((name) => ({
-    sql: 'INSERT OR IGNORE INTO categories (name) VALUES (?)',
-    args: [name],
-  })));
+  // Seed only when no default exists yet, so admins can delete or rename defaults
+  // without them coming back on the next restart.
+  const seeded = await db.execute({
+    sql: `SELECT 1 FROM categories WHERE name IN (${DEFAULT_CATEGORIES.map(() => '?').join(', ')}) LIMIT 1`,
+    args: DEFAULT_CATEGORIES,
+  });
+  if (!seeded.rows.length) {
+    await db.batch(DEFAULT_CATEGORIES.map((name) => ({
+      sql: 'INSERT OR IGNORE INTO categories (name) VALUES (?)',
+      args: [name],
+    })));
+  }
 }
 
 module.exports = { db, initSchema };

@@ -111,4 +111,7 @@ export const api = {
   updateCategory: (id, name) => request(`/api/admin/categories/${id}`, { method: 'PUT', body: { name } }),
   updateMemberOrder: (seasonId, order) =>
     request(`/api/admin/seasons/${seasonId}/member-order`, { method: 'PUT', body: { order } }),
+
+  // dashboard
+  dashboard: (seasonId) => request(`/api/dashboard/seasons/${seasonId}`),
 };
