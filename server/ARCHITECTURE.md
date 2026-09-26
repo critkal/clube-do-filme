@@ -161,7 +161,7 @@ All schema lives in [src/db.js](src/db.js):
 3. Keep `scripts/initDb.js` (seeds the first admin) in sync with schema changes.
 
 ### Current tables
-`members`, `sessions`, `seasons`, `season_members`, `movies`, `ratings`, `categories`, `movie_categories`, `referrals`, `final_votes`. See `db.js` for columns and constraints — it is the single source of truth (the root `AGENTS.md` table list may lag behind).
+`members`, `sessions`, `seasons`, `season_members`, `movies`, `ratings`, `categories`, `movie_categories`, `referrals`, `final_votes`, `attendances`. See `db.js` for columns and constraints — it is the single source of truth (the root `AGENTS.md` table list may lag behind).
 
 ---
 
@@ -203,6 +203,7 @@ The client may hide things, but these must be guaranteed in the backend:
 - **Round slots:** a movie occupies the lowest open `round_number`; filling the last slot flips the season to `completed` (`maybeCloseSeason`).
 - **One final vote per (season, category, voter).** Enforced by UNIQUE + server check.
 - **Categories are global.** Anyone can create; only admins delete.
+- **Attendance window.** Non-admins mark/unmark only themselves, from 00:00 -03:00 on `event_date` until 48h later (`attendance_closed` otherwise, including when `event_date` is null). Admins bypass both rules.
 
 When adding features, ask "does this leak a secret rating or bypass an invariant?" before writing the query.
 

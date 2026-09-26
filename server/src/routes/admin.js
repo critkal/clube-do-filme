@@ -39,6 +39,7 @@ router.delete('/members/:id', requireAdmin, async (req, res) => {
   }
   await db.execute({ sql: 'DELETE FROM ratings WHERE member_id = ?', args: [id] });
   await db.execute({ sql: 'DELETE FROM final_votes WHERE voter_id = ?', args: [id] });
+  await db.execute({ sql: 'DELETE FROM attendances WHERE member_id = ?', args: [id] });
   await db.execute({ sql: 'DELETE FROM season_members WHERE member_id = ?', args: [id] });
   await db.execute({ sql: 'DELETE FROM sessions WHERE sess LIKE ?', args: [`%"memberId":${id}%`] });
   await db.execute({ sql: 'DELETE FROM members WHERE id = ?', args: [id] });
@@ -174,6 +175,7 @@ router.delete('/seasons/:id', requireAdmin, async (req, res) => {
   await db.execute({ sql: 'DELETE FROM ratings WHERE movie_id IN (SELECT id FROM movies WHERE season_id = ?)', args: [id] });
   await db.execute({ sql: 'DELETE FROM movie_categories WHERE movie_id IN (SELECT id FROM movies WHERE season_id = ?)', args: [id] });
   await db.execute({ sql: 'DELETE FROM final_votes WHERE movie_id IN (SELECT id FROM movies WHERE season_id = ?)', args: [id] });
+  await db.execute({ sql: 'DELETE FROM attendances WHERE movie_id IN (SELECT id FROM movies WHERE season_id = ?)', args: [id] });
   await db.execute({ sql: 'DELETE FROM final_votes WHERE season_id = ?', args: [id] });
   await db.execute({ sql: 'DELETE FROM movies WHERE season_id = ?', args: [id] });
   await db.execute({ sql: 'DELETE FROM season_members WHERE season_id = ?', args: [id] });
@@ -256,6 +258,7 @@ router.delete('/movies/:id', requireAdmin, async (req, res) => {
   await db.execute({ sql: 'DELETE FROM ratings WHERE movie_id = ?', args: [id] });
   await db.execute({ sql: 'DELETE FROM movie_categories WHERE movie_id = ?', args: [id] });
   await db.execute({ sql: 'DELETE FROM final_votes WHERE movie_id = ?', args: [id] });
+  await db.execute({ sql: 'DELETE FROM attendances WHERE movie_id = ?', args: [id] });
   await db.execute({ sql: 'DELETE FROM movies WHERE id = ?', args: [id] });
 
   const publicId = m.rows[0].poster_public_id;
