@@ -430,7 +430,7 @@ function SeasonsSection({ seasons, members, ctx }) {
                       {s.status === 'active' && (
                         <ConfirmButton
                           className="btn"
-                          question="Encerrar a temporada?" tone="neutral"
+                          question="Encerrar a temporada?" tone="primary"
                           busy={ctx.pending === `complete-${s.id}`}
                           busyLabel="Encerrando…"
                           onConfirm={() => ctx.act(() => api.completeSeason(s.id), 'Temporada encerrada', `complete-${s.id}`)}
@@ -441,7 +441,7 @@ function SeasonsSection({ seasons, members, ctx }) {
                       {s.status === 'completed' && (
                         <ConfirmButton
                           className="btn primary"
-                          question="Revelar notas e resultados para todos?" tone="neutral"
+                          question="Revelar notas e resultados para todos?" tone="primary"
                           busy={ctx.pending === `present-${s.id}`}
                           busyLabel="Publicando…"
                           onConfirm={() => ctx.act(() => api.presentSeason(s.id), 'Temporada apresentada!', `present-${s.id}`)}

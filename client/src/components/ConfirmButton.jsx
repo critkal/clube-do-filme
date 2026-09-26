@@ -10,12 +10,12 @@ import { useEffect, useRef, useState } from 'react';
  *  - className: trigger button class (default "btn danger")
  *  - question: confirmation prompt (default "Confirmar?")
  *  - busy / busyLabel: show a pending state while the action runs
+ *  - tone: "danger" (default) or "primary" for non-destructive confirmations
  *  - disabled
- *  - tone: "danger" (default) or "neutral" for the confirm button's color
  *
- * The prompt closes once onConfirm settles, whether it succeeded or failed.
  * Arming moves focus to "Não" so a stray Enter can't confirm; Escape cancels
- * and returns focus to the trigger.
+ * and returns focus to the trigger. The prompt closes once onConfirm settles
+ * (including when its promise rejects), so a failed action can be retried.
  */
 export default function ConfirmButton({
   onConfirm,
@@ -24,8 +24,8 @@ export default function ConfirmButton({
   question = 'Confirmar?',
   busy = false,
   busyLabel = 'Aguarde…',
-  disabled = false,
   tone = 'danger',
+  disabled = false,
 }) {
   const [armed, setArmed] = useState(false);
   const triggerRef = useRef(null);
@@ -38,6 +38,14 @@ export default function ConfirmButton({
     wasArmed.current = armed;
   }, [armed]);
 
+  async function confirm() {
+    try {
+      await onConfirm?.();
+    } finally {
+      setArmed(false);
+    }
+  }
+
   if (!armed) {
     return (
       <button ref={triggerRef} type="button" className={className} disabled={disabled} onClick={() => setArmed(true)}>
@@ -48,7 +56,7 @@ export default function ConfirmButton({
 
   return (
     <span
-      className="confirm-inline"
+      className={`confirm-inline ${tone === 'danger' ? '' : 'neutral'}`}
       role="group"
       aria-label={question}
       onKeyDown={(e) => { if (e.key === 'Escape' && !busy) setArmed(false); }}
@@ -56,11 +64,9 @@ export default function ConfirmButton({
       <span className="confirm-inline-q" aria-live="polite">{question}</span>
       <button
         type="button"
-        className={tone === 'danger' ? 'link-btn danger' : 'link-btn'}
+        className={`link-btn ${tone === 'danger' ? 'danger' : 'strong'}`}
         disabled={busy}
-        onClick={async () => {
-          try { await onConfirm(); } finally { setArmed(false); }
-        }}
+        onClick={confirm}
       >
         {busy ? busyLabel : 'Sim'}
       </button>
