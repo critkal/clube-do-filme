@@ -584,6 +584,17 @@ button.link-btn.danger:hover:not(:disabled) {
   border-color: rgba(248, 113, 113, 0.3);
   color: var(--danger);
 }
+button.link-btn.strong {
+  color: var(--gold);
+  font-weight: 600;
+  background: rgba(245, 183, 61, 0.1);
+  border-color: rgba(245, 183, 61, 0.35);
+}
+button.link-btn.strong:hover:not(:disabled) {
+  color: var(--gold);
+  background: rgba(245, 183, 61, 0.18);
+  border-color: var(--gold);
+}
 button.link-inline {
   background: transparent;
   border: none;
@@ -621,6 +632,10 @@ button.link-inline:hover:not(:disabled) { color: var(--danger); background: tran
   border: 1px solid var(--danger-border);
   border-radius: var(--radius-sm);
   background: var(--danger-bg);
+}
+.confirm-inline.neutral {
+  border-color: rgba(245, 183, 61, 0.3);
+  background: rgba(245, 183, 61, 0.06);
 }
 .confirm-inline-q {
   font-size: 0.82rem;
@@ -739,6 +754,7 @@ label {
 label input, label select, label textarea { color: var(--text); letter-spacing: normal; text-transform: none; }
 /* Inline checkbox/radio labels: side by side, sentence case, full tap height */
 label.row,
+.check-label,
 label:has(> input[type="checkbox"]),
 label:has(> input[type="radio"]) {
   flex-direction: row;
@@ -1339,5 +1355,16 @@ p.loading::before, div.loading::before {
    target on touch screens. */
 @media (pointer: coarse) {
   button.link, button.link-btn, .back-link { min-height: var(--tap); }
-  button.link-inline { min-width: var(--tap-sm); min-height: var(--tap-sm); }
+  button.link-btn.strong {
+  color: var(--gold);
+  font-weight: 600;
+  background: rgba(245, 183, 61, 0.1);
+  border-color: rgba(245, 183, 61, 0.35);
+}
+button.link-btn.strong:hover:not(:disabled) {
+  color: var(--gold);
+  background: rgba(245, 183, 61, 0.18);
+  border-color: var(--gold);
+}
+button.link-inline { min-width: var(--tap-sm); min-height: var(--tap-sm); }
 }
