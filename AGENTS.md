@@ -114,7 +114,7 @@ GET    /members                      # All members (public)
 GET    /seasons                      # All seasons
 GET    /seasons/:id                  # Season detail + member queue
 GET    /seasons/:id/movies           # Movies in season
-POST   /seasons/:id/final-vote       # Cast award vote
+POST   /seasons/:id/final-votes      # Cast award vote
 GET    /seasons/:id/results          # Final vote tallies
 
 GET    /movies/:id                   # Movie detail + ratings

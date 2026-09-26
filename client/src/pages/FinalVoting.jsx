@@ -98,7 +98,7 @@ export default function FinalVoting() {
                         {(n.average_rating != null || n.referral_count > 0) && (
                           <div className="nominee-meta">
                             {n.average_rating != null && (
-                              <span><span className="nominee-star">★</span> {n.average_rating.toFixed(1)} média</span>
+                              <span><span className="nominee-star">★</span> {n.average_rating.toFixed(1).replace('.', ',')} média</span>
                             )}
                             {n.referral_count > 0 && (
                               <span>{n.referral_count} {n.referral_count === 1 ? 'indicação' : 'indicações'}</span>

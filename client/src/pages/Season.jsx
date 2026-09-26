@@ -197,7 +197,7 @@ function MoviePostCard({ m, isOwn }) {
                 <span className="your-rating pending">Falta sua nota →</span>
               )}
               {m.rating_count > 0 && (
-                <span className="muted post-avg">média ★ {m.average_rating.toFixed(1)} · {m.rating_count} {m.rating_count === 1 ? 'nota' : 'notas'}</span>
+                <span className="muted post-avg">média ★ {m.average_rating.toFixed(1).replace('.', ',')} · {m.rating_count} {m.rating_count === 1 ? 'nota' : 'notas'}</span>
               )}
             </div>
           </div>

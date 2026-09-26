@@ -57,13 +57,15 @@ function sessionCookieOptions() {
 
 function sessionMiddleware() {
   return async (req, res, next) => {
-    // Cookie first (desktop), then Authorization header (Safari iOS / cross-origin)
+    // Cookie first (desktop), then Authorization header (Safari iOS / cross-origin).
+    // A stale cookie must not shadow a valid Bearer token.
     let sid = req.cookies?.[COOKIE_NAME];
-    if (!sid) {
-      const auth = req.headers.authorization || '';
-      if (auth.startsWith('Bearer ')) sid = auth.slice(7).trim();
+    let sess = await getSession(sid);
+    const auth = req.headers.authorization || '';
+    if (!sess && auth.startsWith('Bearer ')) {
+      sid = auth.slice(7).trim();
+      sess = await getSession(sid);
     }
-    const sess = await getSession(sid);
     req.session = sess;
     req.sid = sid;
     res.setSession = async (memberId) => {

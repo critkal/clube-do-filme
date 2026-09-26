@@ -87,7 +87,7 @@ export default function Movie() {
 
             {movie.ratings_visible && movie.rating_count > 0 && (
               <p className="movie-hero-score">
-                <span className="movie-hero-score-value">{movie.average_rating.toFixed(1)}</span>
+                <span className="movie-hero-score-value">{movie.average_rating.toFixed(1).replace('.', ',')}</span>
                 <span className="movie-hero-score-max">/10</span>
                 <span className="muted">
                   média de {movie.rating_count} nota{movie.rating_count > 1 ? 's' : ''}
