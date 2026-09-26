@@ -811,6 +811,44 @@ select {
   border-color: rgba(245, 183, 61, 0.45);
   background: rgba(245, 183, 61, 0.06);
 }
+.nominee.dim { opacity: 0.6; }
+.nominee > button { flex-shrink: 0; }
+.nominee-info { min-width: 0; }
+.nominee-title { font-weight: 600; font-size: 0.95rem; overflow-wrap: anywhere; }
+.nominee-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.75rem;
+  margin-top: 0.1rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.nominee-star { color: var(--amber); }
+.nominee-mark { flex-shrink: 0; font-size: 0.82rem; font-weight: 600; color: var(--amber); white-space: nowrap; }
+.nominee-confirm { display: flex; flex-shrink: 0; align-items: center; gap: 0.25rem; }
+.nominee-card { display: flex; flex-direction: column; gap: 0.75rem; }
+.nominee-card-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.nominee-card-head h3 { margin: 0; font-family: 'Playfair Display', serif; font-size: 1.1rem; }
+.nominee-status {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.nominee-status.done { color: var(--amber); }
+.nominee-empty, .nominee-error { margin: 0; }
+.final-intro { margin: 0.25rem 0 0; }
+.final-progress { display: flex; flex-direction: column; gap: 0.45rem; font-size: 0.875rem; color: var(--muted); }
+.final-progress .tally-bar-track { flex: none; height: 6px; }
+
+@media (max-width: 480px) {
+  .nominee:has(.nominee-confirm) { flex-wrap: wrap; }
+  .nominee:has(.nominee-confirm) .nominee-info { flex-basis: 100%; }
+  .nominee-confirm { width: 100%; }
+  .nominee-confirm .primary { flex: 1; }
+}
 
 /* ── LOGIN ───────────────────────────────────────────── */
 .login-wrap {
@@ -864,6 +902,37 @@ select {
 .winner-row { font-weight: 600; }
 .winner-row .tally-label { color: var(--text); }
 .winner-row .tally-bar-fill { background: var(--gradient); box-shadow: 0 0 8px rgba(245, 183, 61, 0.4); }
+.winner-row .tally-count { color: var(--amber); }
+
+.result-card { display: flex; flex-direction: column; gap: 0.85rem; }
+.result-card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
+.result-card-head h3 { margin: 0; font-family: 'Playfair Display', serif; font-size: 1.1rem; }
+.result-total { flex-shrink: 0; font-size: 0.8rem; color: var(--muted); }
+.result-winner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  background: var(--gradient-subtle);
+  border: 1px solid rgba(245, 183, 61, 0.25);
+  border-radius: var(--radius-sm);
+}
+.result-winner-icon { font-size: 1.5rem; line-height: 1; }
+.result-winner-info { min-width: 0; }
+.result-winner-title { font-weight: 700; font-size: 1.05rem; line-height: 1.3; overflow-wrap: anywhere; }
+.result-winner-votes { font-size: 0.8rem; color: var(--muted); }
+.result-tie {
+  display: inline-block;
+  margin-bottom: 0.15rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+.result-tally { display: flex; flex-direction: column; }
+.result-empty-title { margin: 0 0 0.35rem; }
+.result-empty-list { margin: 0; line-height: 1.7; }
 
 /* ── DASHBOARD ───────────────────────────────────────── */
 .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; }
@@ -872,6 +941,23 @@ select {
 .stat-value { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; }
 .stat-tile .tally-bar-track { flex: none; }
 .tally-label.dist-label { flex: 0 0 1.5rem; text-align: right; color: var(--muted); }
+.stat-note { color: var(--muted); font-size: 0.82rem; }
+.dash-season { max-width: 360px; }
+.dash-card { display: flex; flex-direction: column; gap: 0.5rem; }
+.dash-card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
+.dash-card-head h3 { margin: 0; }
+.dash-card-hint { font-size: 0.75rem; color: var(--muted); }
+.dash-list { display: flex; flex-direction: column; }
+.dash-list-ruled .tally-row { padding: 0.55rem 0; }
+.dash-list-ruled .tally-row + .tally-row { border-top: 1px solid var(--border); }
+.dash-list .tally-label a { display: block; overflow: hidden; text-overflow: ellipsis; color: var(--text); font-weight: 500; }
+.dash-list .tally-label a:hover { color: var(--gold); }
+.dash-sub { display: block; font-size: 0.75rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+.dash-value { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; min-width: 2.5rem; }
+@media (max-width: 480px) {
+  .dash-season { max-width: none; }
+  .dash-list .tally-label a { white-space: normal; }
+}
 
 /* ── LOADING ─────────────────────────────────────────── */
 @keyframes pulse {
@@ -1083,6 +1169,106 @@ select {
   flex-direction: column;
   justify-content: flex-start;
   padding-top: 0.2rem;
+}
+.movie-hero-title { margin: 0 0 0.35rem; overflow-wrap: anywhere; }
+.movie-hero-year { color: var(--muted); font-size: 1rem; font-weight: 400; }
+.movie-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.9rem;
+  margin: 0 0 0.35rem;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+.movie-hero-meta strong,
+.movie-hero-credit strong { color: var(--text); font-weight: 600; }
+.movie-hero-credit { margin: 0; font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+.movie-hero-score {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.4rem;
+  margin: 1rem 0 0;
+}
+.movie-hero-score-value {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.1rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--amber);
+}
+.movie-hero-score-max { font-size: 0.9rem; color: var(--amber); opacity: 0.75; margin-right: 0.3rem; }
+.movie-hero-note { margin: 1rem 0 0; font-size: 0.85rem; color: var(--muted); }
+.movie-hero-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem 0.75rem;
+  margin-top: 1.1rem;
+}
+
+/* Cards below the hero on the movie page */
+.movie-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+.movie-card-head .movie-card-title { margin: 0; }
+.movie-card-title { margin: 0 0 0.75rem; font-size: 1rem; }
+.movie-card-hint { font-size: 0.8rem; color: var(--muted); }
+.movie-card-foot { margin: 0.25rem 0 0; font-size: 0.82rem; }
+.movie-synopsis { margin: 0; font-size: 0.92rem; line-height: 1.7; }
+.movie-referral-mine { font-size: 0.75rem; color: var(--amber); font-weight: 700; }
+
+.movie-comments { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.movie-comment {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.7rem 0.85rem;
+}
+.movie-comment-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.85rem;
+}
+.movie-comment-score { color: var(--amber); font-weight: 600; font-size: 0.8rem; white-space: nowrap; }
+.movie-comment p { margin: 0; font-size: 0.9rem; line-height: 1.55; overflow-wrap: anywhere; }
+
+.attendee-you { border-color: var(--amber); color: var(--amber); }
+.attendance-empty { margin: 0 0 0.75rem; }
+.attendance-self {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem 0.9rem;
+}
+.attendance-window { font-size: 0.82rem; color: var(--muted); }
+.attendance-window.open { color: var(--ok); }
+.attendance-admin {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+.attendance-date { max-width: 220px; }
+.attendance-checklist .cat-chip { min-height: 40px; }
+.attendance-error { margin: 0.75rem 0 0; }
+.movie-admin-actions { display: flex; padding-top: 0.5rem; }
+
+@media (max-width: 480px) {
+  .movie-hero-meta, .movie-hero-score, .movie-hero-actions { justify-content: center; }
+  .movie-hero-actions .btn { width: 100%; }
+  .attendance-self .btn { width: 100%; }
+  .attendance-date { max-width: none; }
 }
 
 /* ── MOBILE ──────────────────────────────────────────── */
