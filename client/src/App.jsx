@@ -12,6 +12,7 @@ import Vote from './pages/Vote.jsx';
 import Admin from './pages/Admin.jsx';
 import FinalVoting from './pages/FinalVoting.jsx';
 import Results from './pages/Results.jsx';
+import Dashboard from './pages/Dashboard.jsx';
 
 // A plain reload can be served straight from the HTTP cache, re-running the very
 // same (stale) bundle that reported the update — so the banner never goes away.
@@ -69,6 +70,7 @@ export default function App() {
           <Route path="/movies/:id" element={<Protected me={me}><Movie /></Protected>} />
           <Route path="/movies/:id/vote" element={<Protected me={me}><Vote /></Protected>} />
           <Route path="/admin" element={<Protected me={me} admin><Admin /></Protected>} />
+          <Route path="/dashboard" element={<Protected me={me} admin><Dashboard /></Protected>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

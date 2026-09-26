@@ -50,7 +50,8 @@ Before writing any code, read the architecture guide for the side you're touchin
 │       │   ├── Movie.jsx        # Movie detail, ratings, categories
 │       │   ├── FinalVoting.jsx  # Award voting UI
 │       │   ├── Results.jsx      # Vote tallies + winners
-│       │   └── Admin.jsx        # Admin panel (4 tabs: Members, Seasons, Movies, Categories)
+│       │   ├── Admin.jsx        # Admin panel (4 tabs: Members, Seasons, Movies, Categories)
+│       │   └── Dashboard.jsx    # Admin-only season metrics (ratings, activity, attendance)
 │       └── components/
 │           ├── Nav.jsx
 │           ├── MoviePoster.jsx
@@ -70,6 +71,7 @@ Before writing any code, read the architecture guide for the side you're touchin
             ├── movies.js        # Movie CRUD, ratings, category nomination
             ├── categories.js    # Category CRUD
             ├── admin.js         # Admin-only management endpoints
+            ├── dashboard.js     # Admin-only season metrics
             └── tmdb.js          # Proxy: GET /tmdb/search, /tmdb/details/:id
 ```
 
@@ -137,6 +139,8 @@ PUT    /admin/seasons/:id            # Update season (status, host, etc.)
 DELETE /admin/seasons/:id            # Delete season
 PUT    /admin/movies/:id             # Edit any movie
 DELETE /admin/movies/:id             # Delete any movie
+
+GET    /dashboard/seasons/:id        # Season metrics (admin)
 ```
 
 ---
@@ -224,4 +228,3 @@ From [STEPS.md](STEPS.md):
 3. Attendance tracking per session
 4. Next-session date voting
 5. Pre-registered movies (next-round placeholders)
-6. Host analytics dashboard

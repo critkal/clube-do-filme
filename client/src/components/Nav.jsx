@@ -10,6 +10,7 @@ export default function Nav() {
   // "/" redirects, so highlight Início across the whole season/movie flow.
   const homeActive = pathname === '/' || pathname.startsWith('/seasons') || pathname.startsWith('/movies');
   const adminActive = pathname.startsWith('/admin');
+  const dashboardActive = pathname.startsWith('/dashboard');
 
   // Tap-to-arm, tap-again-to-confirm — an inline alternative to window.confirm()
   // that works the same on touch and pointer devices.
@@ -53,6 +54,11 @@ export default function Nav() {
               <IconHome /><span>Início</span>
             </Link>
             {me.is_admin && (
+              <Link to="/dashboard" className={`sidebar-item ${dashboardActive ? 'active' : ''}`}>
+                <IconChart /><span>Dashboard</span>
+              </Link>
+            )}
+            {me.is_admin && (
               <Link to="/admin" className={`sidebar-item ${adminActive ? 'active' : ''}`}>
                 <IconAdmin /><span>Admin</span>
               </Link>
@@ -79,6 +85,7 @@ export default function Nav() {
           onLogoutClick={handleLogoutClick}
           homeActive={homeActive}
           adminActive={adminActive}
+          dashboardActive={dashboardActive}
         />
       )}
     </>
@@ -115,13 +122,19 @@ function ClapMark({ size = 26 }) {
   );
 }
 
-function BottomNav({ isAdmin, logoutArmed, onLogoutClick, homeActive, adminActive }) {
+function BottomNav({ isAdmin, logoutArmed, onLogoutClick, homeActive, adminActive, dashboardActive }) {
   return (
     <nav className="bottom-nav" aria-label="Navegação principal">
       <Link to="/" className={`bottom-nav-item ${homeActive ? 'active' : ''}`}>
         <IconHome />
         <span>Início</span>
       </Link>
+      {isAdmin && (
+        <Link to="/dashboard" className={`bottom-nav-item ${dashboardActive ? 'active' : ''}`}>
+          <IconChart />
+          <span>Dashboard</span>
+        </Link>
+      )}
       {isAdmin && (
         <Link to="/admin" className={`bottom-nav-item ${adminActive ? 'active' : ''}`}>
           <IconAdmin />
@@ -152,6 +165,15 @@ function IconHome() {
       <path d="M3 10.5 12 4l9 6.5" />
       <path d="M5 9.5V19a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5" />
       <path d="M9.5 20v-6h5v6" />
+    </svg>
+  );
+}
+
+function IconChart() {
+  return (
+    <svg {...iconProps} aria-hidden="true">
+      <path d="M4 20h16" />
+      <path d="M7 16v-5M12 16V6M17 16v-8" />
     </svg>
   );
 }

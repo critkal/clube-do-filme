@@ -81,7 +81,7 @@
 
 ---
 
-## 11. Dashboard do host (admin)
+## ~~11. Dashboard do host (admin)~~ ✅
 - Rota `/dashboard` acessível apenas para admin/host
 - Métricas da temporada atual: filmes assistidos, média geral, membro mais ativo, distribuição de notas, progresso da temporada
 - Depende de: tela do filme (✅), lista de membros (✅), presença nas sessões (item 8)
@@ -102,4 +102,4 @@
 | 8 | Presença nas sessões | pendente |
 | 9 | Votação do próximo dia de filme | pendente |
 | 10 | Próximo filme pré-cadastrado automaticamente | pendente |
-| 11 | Dashboard do host | pendente |
+| 11 | Dashboard do host | ✅ |

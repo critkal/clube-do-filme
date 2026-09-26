@@ -49,6 +49,13 @@ const SCHEMA_STATEMENTS = [
     comment TEXT,
     UNIQUE(movie_id, member_id)
   )`,
+  `CREATE TABLE IF NOT EXISTS attendances (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  movie_id INTEGER REFERENCES movies(id) ON DELETE CASCADE,
+  member_id INTEGER REFERENCES members(id),
+  created_at TEXT DEFAULT (datetime('now')),
+  UNIQUE(movie_id, member_id)
+)`,
   `CREATE TABLE IF NOT EXISTS categories (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT UNIQUE NOT NULL
