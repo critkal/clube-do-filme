@@ -121,6 +121,19 @@ async function migrateRatings() {
   await db.execute('ALTER TABLE ratings_v2 RENAME TO ratings');
 }
 
+const DEFAULT_CATEGORIES = [
+  'Melhor Filme',
+  'Melhor Direção',
+  'Melhor Roteiro',
+  'Melhor Fotografia',
+  'Melhor Trilha Sonora',
+  'Melhor Atuação',
+  'Pior Filme',
+  'Filme Mais Divisivo',
+  'Maior Surpresa',
+  'Melhor Final',
+];
+
 async function initSchema() {
   for (const stmt of SCHEMA_STATEMENTS) {
     await db.execute(stmt);
@@ -129,6 +142,10 @@ async function initSchema() {
     try { await db.execute(sql); } catch { /* column already exists */ }
   }
   await migrateRatings();
+  await db.batch(DEFAULT_CATEGORIES.map((name) => ({
+    sql: 'INSERT OR IGNORE INTO categories (name) VALUES (?)',
+    args: [name],
+  })));
 }
 
 module.exports = { db, initSchema };

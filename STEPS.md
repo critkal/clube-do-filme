@@ -19,9 +19,9 @@
 
 ---
 
-## 3. Cadastrar categorias base
-- Criar seed com as categorias padrão do clube (ex: Melhor Filme, Melhor Direção, etc.)
-- A UI de gerenciamento já existe no Admin → Categorias; falta popular com as categorias padrão
+## ~~3. Cadastrar categorias base~~ ✅
+- ~~Criar seed com as categorias padrão do clube~~ — `initSchema()` insere as categorias padrão com `INSERT OR IGNORE` a cada inicialização
+- Categorias padrão excluídas ou renomeadas no Admin → Categorias voltam a ser criadas no próximo restart do servidor
 
 ---
 
@@ -98,7 +98,7 @@
 | 4 | Lista ordenada de membros | ✅ |
 | 5 | Geração aleatória na nova temporada | ✅ |
 | 6 | Melhorar tela do filme | ✅ |
-| 7 | Categorias base (seed) | pendente |
+| 7 | Categorias base (seed) | ✅ |
 | 8 | Presença nas sessões | pendente |
 | 9 | Votação do próximo dia de filme | pendente |
 | 10 | Próximo filme pré-cadastrado automaticamente | pendente |

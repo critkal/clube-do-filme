@@ -220,8 +220,7 @@ cd server && npm run init-db
 
 From [STEPS.md](STEPS.md):
 1. Google OAuth to replace first-name login
-2. Base/seed categories (defaults for new seasons)
-3. Attendance tracking per session
-4. Next-session date voting
-5. Pre-registered movies (next-round placeholders)
-6. Host analytics dashboard
+2. Attendance tracking per session
+3. Next-session date voting
+4. Pre-registered movies (next-round placeholders)
+5. Host analytics dashboard
