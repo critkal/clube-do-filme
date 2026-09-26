@@ -73,6 +73,13 @@ const SCHEMA_STATEMENTS = [
     movie_id INTEGER REFERENCES movies(id),
     UNIQUE(season_id, category_id, voter_id)
   )`,
+  `CREATE TABLE IF NOT EXISTS attendances (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    movie_id INTEGER REFERENCES movies(id) ON DELETE CASCADE,
+    member_id INTEGER REFERENCES members(id),
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(movie_id, member_id)
+  )`,
   `CREATE TABLE IF NOT EXISTS sessions (
     sid TEXT PRIMARY KEY,
     sess TEXT NOT NULL,

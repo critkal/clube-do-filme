@@ -77,6 +77,10 @@ export const api = {
   }),
   addReferral: (movieId, data) => request(`/api/movies/${movieId}/referrals`, { method: 'POST', body: data }),
   removeReferral: (movieId, catId) => request(`/api/movies/${movieId}/referrals/${catId}`, { method: 'DELETE' }),
+  markAttendance: (movieId, memberId) =>
+    request(`/api/movies/${movieId}/attendance`, { method: 'POST', body: memberId ? { member_id: memberId } : {} }),
+  unmarkAttendance: (movieId, memberId) =>
+    request(`/api/movies/${movieId}/attendance${memberId ? `?member_id=${memberId}` : ''}`, { method: 'DELETE' }),
   updateMovie: (id, formData) =>
     request(`/api/movies/${id}`, { method: 'PUT', body: formData, isForm: true }),
   addMovieCategory: (movieId, categoryId) =>

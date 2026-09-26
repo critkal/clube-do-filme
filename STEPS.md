@@ -55,12 +55,12 @@
 
 ---
 
-## 8. Presença nas sessões
-- Qualquer membro autenticado pode registrar a própria presença na sessão do dia
-- Cada membro marca apenas a si mesmo (não pode marcar outros)
-- Criar tabela `attendances` (movie_id, member_id, created_at)
-- Janela de registro aberta a partir da data da sessão; fechada pelo host ou automaticamente após X horas
-- Exibir lista de presença na página do filme após a sessão
+## ~~8. Presença nas sessões~~ ✅
+- ~~Qualquer membro autenticado pode registrar a própria presença na sessão do dia~~ — botão "Marcar presença" na página do filme
+- ~~Cada membro marca apenas a si mesmo~~ — admins podem marcar/desmarcar qualquer membro a qualquer momento
+- ~~Criar tabela `attendances` (movie_id, member_id, created_at)~~ — UNIQUE(movie_id, member_id)
+- ~~Janela de registro~~ — abre às 00:00 (horário de Brasília) do `event_date` e fecha 48h depois; sem data, só admin marca (`attendance_closed`). Admin define a data no card de presença
+- ~~Exibir lista de presença na página do filme~~ — implementado
 - Usar no dashboard: ranking de frequência, % de presença na temporada
 
 ---
@@ -99,7 +99,7 @@
 | 5 | Geração aleatória na nova temporada | ✅ |
 | 6 | Melhorar tela do filme | ✅ |
 | 7 | Categorias base (seed) | ✅ |
-| 8 | Presença nas sessões | pendente |
+| 8 | Presença nas sessões | ✅ |
 | 9 | Votação do próximo dia de filme | pendente |
 | 10 | Próximo filme pré-cadastrado automaticamente | pendente |
-| 11 | Dashboard do host | pendente |
+| 11 | Dashboard do host | ✅ |

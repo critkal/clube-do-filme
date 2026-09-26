@@ -48,6 +48,40 @@ async function maybeCloseSeason(seasonId) {
   }
 }
 
+// event_date is a plain YYYY-MM-DD. The club meets in Brazil (UTC-3, no DST since 2019),
+// so the session day starts at 00:00 -03:00 whatever the server's own timezone is.
+const ATTENDANCE_WINDOW_MS = 48 * 60 * 60 * 1000;
+function attendanceWindow(eventDate) {
+  const day = /^\d{4}-\d{2}-\d{2}/.exec(eventDate || '');
+  if (!day) return null;
+  const opens = new Date(`${day[0]}T00:00:00-03:00`);
+  if (Number.isNaN(opens.getTime())) return null;
+  return { opens, closes: new Date(opens.getTime() + ATTENDANCE_WINDOW_MS) };
+}
+
+// Shared checks for marking/unmarking attendance. Members act only on themselves and only
+// inside the window; admins may target any member at any time.
+async function resolveAttendanceTarget(req, rawMemberId) {
+  const movieId = Number(req.params.id);
+  const m = await db.execute({ sql: 'SELECT event_date FROM movies WHERE id = ?', args: [movieId] });
+  if (!m.rows.length) return { status: 404, error: 'not_found' };
+
+  const hasTarget = rawMemberId != null && rawMemberId !== '';
+  const memberId = hasTarget ? Number(rawMemberId) : req.member.id;
+  if (!req.member.is_admin) {
+    if (memberId !== req.member.id) return { status: 403, error: 'forbidden' };
+    const win = attendanceWindow(m.rows[0].event_date);
+    const now = Date.now();
+    if (!win || now < win.opens.getTime() || now >= win.closes.getTime()) {
+      return { status: 403, error: 'attendance_closed' };
+    }
+  } else if (memberId !== req.member.id) {
+    const mem = await db.execute({ sql: 'SELECT 1 FROM members WHERE id = ?', args: [memberId] });
+    if (!mem.rows.length) return { status: 404, error: 'member_not_found' };
+  }
+  return { movieId, memberId };
+}
+
 // Mounted at /api/seasons — POST /api/seasons/:seasonId/movies
 seasonScopedRouter.post('/:seasonId/movies', requireAuth, upload.single('poster'), async (req, res) => {
   const seasonId = Number(req.params.seasonId);
@@ -148,6 +182,17 @@ router.get('/:id', requireAuth, async (req, res) => {
     args: [memberId, movieId],
   });
 
+  const att = await db.execute({
+    sql: `SELECT a.member_id, mem.first_name
+          FROM attendances a
+          JOIN members mem ON mem.id = a.member_id
+          WHERE a.movie_id = ?
+          ORDER BY mem.first_name COLLATE NOCASE`,
+    args: [movieId],
+  });
+  const win = attendanceWindow(row.event_date);
+  const now = Date.now();
+
   let voteComments = null;
   if (isHost) {
     const vc = await db.execute({
@@ -194,6 +239,10 @@ router.get('/:id', requireAuth, async (req, res) => {
       count: Number(r.count),
       you_referred: Boolean(r.you_referred),
     })),
+    attendees: att.rows.map((a) => ({ member_id: Number(a.member_id), first_name: a.first_name })),
+    attendance_opens_at: win ? win.opens.toISOString() : null,
+    attendance_closes_at: win ? win.closes.toISOString() : null,
+    attendance_open: Boolean(win && now >= win.opens.getTime() && now < win.closes.getTime()),
   };
   if (voteComments !== null) {
     response.vote_comments = voteComments;
@@ -279,6 +328,28 @@ router.get('/:id/rating', requireAuth, async (req, res) => {
     count: Number(r.rows[0].count || 0),
     your_score: own.rows.length ? Number(own.rows[0].score) : null,
   });
+});
+
+// POST /api/movies/:id/attendance { member_id? } — member_id only honored for admins
+router.post('/:id/attendance', requireAuth, async (req, res) => {
+  const t = await resolveAttendanceTarget(req, req.body?.member_id);
+  if (t.error) return res.status(t.status).json({ error: t.error });
+  await db.execute({
+    sql: 'INSERT OR IGNORE INTO attendances (movie_id, member_id) VALUES (?, ?)',
+    args: [t.movieId, t.memberId],
+  });
+  res.json({ ok: true });
+});
+
+// DELETE /api/movies/:id/attendance?member_id= — member_id only honored for admins
+router.delete('/:id/attendance', requireAuth, async (req, res) => {
+  const t = await resolveAttendanceTarget(req, req.query.member_id);
+  if (t.error) return res.status(t.status).json({ error: t.error });
+  await db.execute({
+    sql: 'DELETE FROM attendances WHERE movie_id = ? AND member_id = ?',
+    args: [t.movieId, t.memberId],
+  });
+  res.json({ ok: true });
 });
 
 // Referrals — anyone can refer a movie to a category

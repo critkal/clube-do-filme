@@ -10,12 +10,15 @@ export default function Movie() {
   const { me } = useAuth();
   const navigate = useNavigate();
   const [movie, setMovie] = useState(null);
+  const [members, setMembers] = useState([]);
   const [err, setErr] = useState('');
   const [deleting, setDeleting] = useState(false);
 
   const load = async () => {
     try {
-      setMovie(await api.movie(id));
+      const [m, mems] = await Promise.all([api.movie(id), me.is_admin ? api.members() : []]);
+      setMovie(m);
+      setMembers(mems);
     } catch (e) {
       setErr(e.message);
     }
@@ -167,6 +170,8 @@ export default function Movie() {
         </div>
       )}
 
+      <AttendanceCard movie={movie} me={me} members={members} onChange={load} />
+
       {me.is_admin && (
         <ConfirmButton
           className="btn danger"
@@ -178,6 +183,130 @@ export default function Movie() {
           Excluir filme
         </ConfirmButton>
       )}
+    </div>
+  );
+}
+
+function formatBR(iso, withTime) {
+  return new Date(iso).toLocaleString('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    day: '2-digit',
+    month: '2-digit',
+    ...(withTime ? { hour: '2-digit', minute: '2-digit' } : {}),
+  });
+}
+
+function AttendanceCard({ movie, me, members, onChange }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const attendeeIds = new Set(movie.attendees.map((a) => a.member_id));
+  const youAttended = attendeeIds.has(me.id);
+
+  async function run(fn) {
+    setBusy(true);
+    setErr('');
+    try {
+      await fn();
+      await onChange();
+    } catch (e) {
+      setErr(e.message);
+    }
+    setBusy(false);
+  }
+
+  const toggleSelf = () => run(() =>
+    youAttended ? api.unmarkAttendance(movie.id) : api.markAttendance(movie.id));
+
+  const toggleMember = (memberId) => run(() =>
+    attendeeIds.has(memberId)
+      ? api.unmarkAttendance(movie.id, memberId)
+      : api.markAttendance(movie.id, memberId));
+
+  const saveDate = (value) => run(() => {
+    const fd = new FormData();
+    fd.append('event_date', value);
+    return api.updateMovie(movie.id, fd);
+  });
+
+  let windowNote;
+  if (!movie.attendance_opens_at) {
+    windowNote = 'Presença abre na data da sessão, que ainda não foi definida.';
+  } else if (movie.attendance_open) {
+    windowNote = `Aberta até ${formatBR(movie.attendance_closes_at, true)}.`;
+  } else if (Date.now() < new Date(movie.attendance_opens_at).getTime()) {
+    windowNote = `Presença abre em ${formatBR(movie.attendance_opens_at)}.`;
+  } else {
+    windowNote = 'Registro de presença encerrado.';
+  }
+
+  return (
+    <div className="card">
+      <div className="row space-between" style={{ marginBottom: '0.65rem' }}>
+        <h3 style={{ margin: 0 }}>Presença</h3>
+        <span className="muted" style={{ fontSize: '0.8rem' }}>
+          {movie.attendees.length} {movie.attendees.length === 1 ? 'presente' : 'presentes'}
+        </span>
+      </div>
+
+      {movie.attendees.length > 0 ? (
+        <ul className="tags">
+          {movie.attendees.map((a) => (
+            <li key={a.member_id} className="tag referral-tag">{a.first_name}</li>
+          ))}
+        </ul>
+      ) : (
+        <p className="muted" style={{ margin: '0 0 0.75rem', fontSize: '0.85rem' }}>
+          Ninguém marcou presença ainda.
+        </p>
+      )}
+
+      <div className="row wrap gap">
+        {movie.attendance_open && (
+          <button
+            type="button"
+            className={`btn ${youAttended ? '' : 'primary'}`}
+            disabled={busy}
+            onClick={toggleSelf}
+          >
+            {youAttended ? 'Desmarcar presença' : 'Marcar presença'}
+          </button>
+        )}
+        <span className="muted" style={{ fontSize: '0.8rem' }}>{windowNote}</span>
+      </div>
+
+      {me.is_admin && (
+        <div style={{ marginTop: '1rem', paddingTop: '0.85rem', borderTop: '1px solid var(--border)' }}>
+          <p className="form-label">Admin</p>
+          <label style={{ marginBottom: '0.75rem' }}>
+            Data da sessão
+            <input
+              type="date"
+              value={movie.event_date ? movie.event_date.slice(0, 10) : ''}
+              disabled={busy}
+              onChange={(e) => saveDate(e.target.value)}
+            />
+          </label>
+          <div className="cat-checklist">
+            {members.map((m) => {
+              const checked = attendeeIds.has(m.id);
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  className={`cat-chip ${checked ? 'checked' : ''}`}
+                  disabled={busy}
+                  onClick={() => toggleMember(m.id)}
+                  aria-pressed={checked}
+                >
+                  {checked ? '✓ ' : ''}{m.first_name}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {err && <p className="error" style={{ margin: '0.75rem 0 0' }}>Erro: {err}</p>}
     </div>
   );
 }

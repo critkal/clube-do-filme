@@ -88,6 +88,7 @@ The full schema lives in [server/src/db.js](server/src/db.js). Tables:
 - **categories** — `id, name (UNIQUE)`
 - **movie_categories** — `movie_id, category_id` — nominations (composite PK)
 - **final_votes** — `season_id, category_id, voter_id, movie_id` — UNIQUE(season_id, category_id, voter_id)
+- **attendances** — `movie_id, member_id, created_at` — UNIQUE(movie_id, member_id)
 
 When editing schema, also update `initDb.js` (`scripts/`) which seeds the first admin.
 
@@ -120,6 +121,8 @@ PUT    /movies/:id                   # Edit movie (admin)
 DELETE /movies/:id                   # Delete movie (admin)
 POST   /movies/:id/rate              # Rate movie { score: 1-5 }
 POST   /movies/:id/nominate          # Nominate in category
+POST   /movies/:id/attendance        # Mark presence { member_id? (admin only) }
+DELETE /movies/:id/attendance        # Unmark presence ?member_id= (admin only)
 
 GET    /categories                   # All categories
 POST   /categories                   # Create category
@@ -149,6 +152,7 @@ DELETE /admin/movies/:id             # Delete any movie
 - **Presenters can't rate their own movie.** Enforced server-side.
 - **One final vote per (season, category, voter).** Enforced by UNIQUE constraint and server-side.
 - **Categories are global** (not per-season). Any member can create them; only admins can delete them.
+- **Attendance is self-service within a window.** Members mark only themselves, from 00:00 (Brasília) on the movie's `event_date` until 48h later; no `event_date` means no self-marking. Admins can mark anyone at any time.
 
 ---
 
@@ -220,7 +224,5 @@ cd server && npm run init-db
 
 From [STEPS.md](STEPS.md):
 1. Google OAuth to replace first-name login
-2. Attendance tracking per session
-3. Next-session date voting
-4. Pre-registered movies (next-round placeholders)
-5. Host analytics dashboard
+2. Next-session date voting
+3. Pre-registered movies (next-round placeholders)
