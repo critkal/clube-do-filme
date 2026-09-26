@@ -3,12 +3,19 @@ import { Link } from 'react-router-dom';
 import { api } from '../api.js';
 
 const fmtAvg = (n) => (n == null ? '—' : n.toFixed(1).replace('.', ','));
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+const MESSAGES = {
+  admin_only: 'Só administradores podem ver o dashboard.',
+  season_not_found: 'Temporada não encontrada.',
+};
+const message = (code) => MESSAGES[code] || `Erro: ${code}`;
 
 export default function Dashboard() {
   const [seasons, setSeasons] = useState(null);
   const [seasonId, setSeasonId] = useState('');
   const [data, setData] = useState(null);
   const [err, setErr] = useState('');
+  const [dataErr, setDataErr] = useState('');
 
   useEffect(() => {
     api.seasons()
@@ -25,18 +32,19 @@ export default function Dashboard() {
   useEffect(() => {
     if (!seasonId) return;
     setData(null);
-    api.dashboard(seasonId).then(setData).catch((e) => setErr(e.message));
+    setDataErr('');
+    api.dashboard(seasonId).then(setData).catch((e) => setDataErr(e.message));
   }, [seasonId]);
 
-  if (err) return <p className="error">Erro: {err}</p>;
+  if (err) return <p className="error">{message(err)}</p>;
   if (seasons === null) return <p className="loading">Carregando…</p>;
-  if (seasons.length === 0) return <p className="muted">Nenhuma temporada ainda.</p>;
+  if (seasons.length === 0) return <p className="muted empty-state">Nenhuma temporada ainda.</p>;
 
   return (
     <div className="stack">
       <h1>Dashboard</h1>
 
-      <label>
+      <label className="dash-season">
         Temporada
         <select value={seasonId} onChange={(e) => setSeasonId(e.target.value)}>
           {seasons.map((s) => (
@@ -47,7 +55,13 @@ export default function Dashboard() {
         </select>
       </label>
 
-      {!data ? <p className="loading">Carregando…</p> : <SeasonStats data={data} />}
+      {dataErr ? (
+        <p className="error" role="alert">{message(dataErr)}</p>
+      ) : !data ? (
+        <p className="loading">Carregando…</p>
+      ) : (
+        <SeasonStats data={data} />
+      )}
     </div>
   );
 }
@@ -68,42 +82,45 @@ function SeasonStats({ data }) {
         <div className="card stat-tile">
           <span className="stat-label">Progresso</span>
           <span className="stat-value">{data.movies_watched}/{season.rounds}</span>
-          <div className="tally-bar-track">
+          <div className="tally-bar-track" aria-hidden="true">
             <div className="tally-bar-fill" style={{ width: `${Math.min(progressPct, 100)}%` }} />
           </div>
-          <span className="muted">filmes assistidos</span>
+          <span className="stat-note">filmes assistidos</span>
         </div>
         <div className="card stat-tile">
           <span className="stat-label">Média geral</span>
           <span className="stat-value">{fmtAvg(data.average_rating)}</span>
-          <span className="muted">{data.rating_count} nota{data.rating_count === 1 ? '' : 's'}</span>
+          <span className="stat-note">{plural(data.rating_count, 'nota', 'notas')}</span>
         </div>
         <div className="card stat-tile">
           <span className="stat-label">Mais ativo</span>
           <span className="stat-value">{top ? top.name : '—'}</span>
           {top && (
-            <span className="muted">
-              {top.ratings_given} nota{top.ratings_given === 1 ? '' : 's'} · {top.referrals_given} indicaç{top.referrals_given === 1 ? 'ão' : 'ões'}
+            <span className="stat-note">
+              {plural(top.ratings_given, 'nota', 'notas')} · {plural(top.referrals_given, 'indicação', 'indicações')}
             </span>
           )}
         </div>
         <div className="card stat-tile">
           <span className="stat-label">Presença média</span>
           <span className="stat-value">{anyAttendance ? `${avgAttendance}%` : '—'}</span>
-          <span className="muted">{data.movies_watched} sess{data.movies_watched === 1 ? 'ão' : 'ões'}</span>
+          <span className="stat-note">{plural(data.movies_watched, 'sessão', 'sessões')}</span>
         </div>
       </div>
 
-      <div className="card stack" style={{ gap: '0.5rem' }}>
-        <h3>Distribuição de notas</h3>
+      <section className="card dash-card">
+        <div className="dash-card-head">
+          <h3>Distribuição de notas</h3>
+          <span className="dash-card-hint">nº de notas</span>
+        </div>
         {data.rating_count === 0 ? (
-          <p className="muted">Nenhuma nota registrada.</p>
+          <p className="muted empty-state">Nenhuma nota registrada.</p>
         ) : (
-          <div>
+          <div className="dash-list">
             {[...distribution].reverse().map((d) => (
               <div key={d.score} className="tally-row">
                 <span className="tally-label dist-label">{d.score}</span>
-                <div className="tally-bar-track">
+                <div className="tally-bar-track" aria-hidden="true">
                   <div className="tally-bar-fill" style={{ width: `${(d.count / maxScoreCount) * 100}%` }} />
                 </div>
                 <span className="tally-count">{d.count}</span>
@@ -111,50 +128,61 @@ function SeasonStats({ data }) {
             ))}
           </div>
         )}
-      </div>
+      </section>
 
-      <div className="card stack" style={{ gap: '0.5rem' }}>
-        <h3>Média por filme</h3>
+      <section className="card dash-card">
+        <div className="dash-card-head">
+          <h3>Média por filme</h3>
+          <span className="dash-card-hint">notas de 1 a 10</span>
+        </div>
         {movies.length === 0 ? (
-          <p className="muted">Nenhum filme ainda.</p>
+          <p className="muted empty-state">Nenhum filme ainda.</p>
         ) : (
-          <div>
+          <div className="dash-list dash-list-ruled">
             {movies.map((m) => (
               <div key={m.id} className="tally-row">
-                <Link to={`/movies/${m.id}`} className="tally-label" title={m.title}>
-                  {m.round_number ? `${m.round_number}. ` : ''}{m.title}
-                  {m.presenter_name && <span className="muted"> · {m.presenter_name}</span>}
-                </Link>
-                <div className="tally-bar-track">
+                <span className="tally-label">
+                  <Link to={`/movies/${m.id}`} title={m.title}>
+                    {m.round_number ? `${m.round_number}. ` : ''}{m.title}
+                  </Link>
+                  <span className="dash-sub">
+                    {m.presenter_name && `${m.presenter_name} · `}{plural(m.rating_count, 'nota', 'notas')}
+                  </span>
+                </span>
+                <div className="tally-bar-track" aria-hidden="true">
                   <div className="tally-bar-fill" style={{ width: `${((m.average_rating || 0) / 10) * 100}%` }} />
                 </div>
-                <span className="tally-count" title={`${m.rating_count} notas`}>{fmtAvg(m.average_rating)}</span>
+                <span className="tally-count dash-value">{fmtAvg(m.average_rating)}</span>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </section>
 
-      <div className="card stack" style={{ gap: '0.5rem' }}>
-        <h3>Frequência</h3>
+      <section className="card dash-card">
+        <div className="dash-card-head">
+          <h3>Frequência</h3>
+          <span className="dash-card-hint">{plural(data.movies_watched, 'sessão', 'sessões')}</span>
+        </div>
         {!anyAttendance ? (
-          <p className="muted">Nenhuma presença registrada.</p>
+          <p className="muted empty-state">Nenhuma presença registrada.</p>
         ) : (
-          <div>
+          <div className="dash-list dash-list-ruled">
             {byAttendance.map((m, i) => (
               <div key={m.member_id} className="tally-row">
-                <span className="tally-label">{i + 1}. {m.name}</span>
-                <div className="tally-bar-track">
+                <span className="tally-label">
+                  {i + 1}. {m.name}
+                  <span className="dash-sub">{m.attended} de {data.movies_watched}</span>
+                </span>
+                <div className="tally-bar-track" aria-hidden="true">
                   <div className="tally-bar-fill" style={{ width: `${m.attendance_pct}%` }} />
                 </div>
-                <span className="tally-count" title={`${m.attended} de ${data.movies_watched} sessões`}>
-                  {m.attendance_pct}%
-                </span>
+                <span className="tally-count dash-value">{m.attendance_pct}%</span>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </section>
     </>
   );
 }
