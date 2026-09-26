@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 /**
  * A destructive action button with an inline two-step confirmation.
@@ -11,6 +11,9 @@ import { useState } from 'react';
  *  - question: confirmation prompt (default "Confirmar?")
  *  - busy / busyLabel: show a pending state while the action runs
  *  - disabled
+ *
+ * Arming moves focus to "Não" so a stray Enter can't confirm; Escape cancels
+ * and returns focus to the trigger.
  */
 export default function ConfirmButton({
   onConfirm,
@@ -22,18 +25,32 @@ export default function ConfirmButton({
   disabled = false,
 }) {
   const [armed, setArmed] = useState(false);
+  const triggerRef = useRef(null);
+  const cancelRef = useRef(null);
+  const wasArmed = useRef(false);
+
+  useEffect(() => {
+    if (armed) cancelRef.current?.focus();
+    else if (wasArmed.current) triggerRef.current?.focus();
+    wasArmed.current = armed;
+  }, [armed]);
 
   if (!armed) {
     return (
-      <button type="button" className={className} disabled={disabled} onClick={() => setArmed(true)}>
+      <button ref={triggerRef} type="button" className={className} disabled={disabled} onClick={() => setArmed(true)}>
         {children}
       </button>
     );
   }
 
   return (
-    <span className="confirm-inline">
-      <span className="confirm-inline-q">{question}</span>
+    <span
+      className="confirm-inline"
+      role="group"
+      aria-label={question}
+      onKeyDown={(e) => { if (e.key === 'Escape' && !busy) setArmed(false); }}
+    >
+      <span className="confirm-inline-q" aria-live="polite">{question}</span>
       <button
         type="button"
         className="link-btn danger"
@@ -42,7 +59,7 @@ export default function ConfirmButton({
       >
         {busy ? busyLabel : 'Sim'}
       </button>
-      <button type="button" className="link-btn" disabled={busy} onClick={() => setArmed(false)}>
+      <button ref={cancelRef} type="button" className="link-btn" disabled={busy} onClick={() => setArmed(false)}>
         Não
       </button>
     </span>

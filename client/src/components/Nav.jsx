@@ -50,16 +50,16 @@ export default function Nav() {
             <span className="brand-text">Clube do <span className="brand-accent">Filme</span></span>
           </Link>
           <nav className="sidebar-nav" aria-label="Navegação principal">
-            <Link to="/" className={`sidebar-item ${homeActive ? 'active' : ''}`}>
+            <Link to="/" className={`sidebar-item ${homeActive ? 'active' : ''}`} aria-current={homeActive ? 'page' : undefined}>
               <IconHome /><span>Início</span>
             </Link>
             {me.is_admin && (
-              <Link to="/dashboard" className={`sidebar-item ${dashboardActive ? 'active' : ''}`}>
+              <Link to="/dashboard" className={`sidebar-item ${dashboardActive ? 'active' : ''}`} aria-current={dashboardActive ? 'page' : undefined}>
                 <IconChart /><span>Dashboard</span>
               </Link>
             )}
             {me.is_admin && (
-              <Link to="/admin" className={`sidebar-item ${adminActive ? 'active' : ''}`}>
+              <Link to="/admin" className={`sidebar-item ${adminActive ? 'active' : ''}`} aria-current={adminActive ? 'page' : undefined}>
                 <IconAdmin /><span>Admin</span>
               </Link>
             )}
@@ -125,18 +125,18 @@ function ClapMark({ size = 26 }) {
 function BottomNav({ isAdmin, logoutArmed, onLogoutClick, homeActive, adminActive, dashboardActive }) {
   return (
     <nav className="bottom-nav" aria-label="Navegação principal">
-      <Link to="/" className={`bottom-nav-item ${homeActive ? 'active' : ''}`}>
+      <Link to="/" className={`bottom-nav-item ${homeActive ? 'active' : ''}`} aria-current={homeActive ? 'page' : undefined}>
         <IconHome />
         <span>Início</span>
       </Link>
       {isAdmin && (
-        <Link to="/dashboard" className={`bottom-nav-item ${dashboardActive ? 'active' : ''}`}>
+        <Link to="/dashboard" className={`bottom-nav-item ${dashboardActive ? 'active' : ''}`} aria-current={dashboardActive ? 'page' : undefined}>
           <IconChart />
           <span>Dashboard</span>
         </Link>
       )}
       {isAdmin && (
-        <Link to="/admin" className={`bottom-nav-item ${adminActive ? 'active' : ''}`}>
+        <Link to="/admin" className={`bottom-nav-item ${adminActive ? 'active' : ''}`} aria-current={adminActive ? 'page' : undefined}>
           <IconAdmin />
           <span>Admin</span>
         </Link>

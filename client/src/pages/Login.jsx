@@ -4,7 +4,8 @@ import { api } from '../api.js';
 import { useAuth } from '../App.jsx';
 
 export default function Login() {
-  const [members, setMembers] = useState([]);
+  const [members, setMembers] = useState(null);
+  const [loadErr, setLoadErr] = useState(false);
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [err, setErr] = useState('');
@@ -13,10 +14,12 @@ export default function Login() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    api.members().then(setMembers).catch(() => setMembers([]));
+    api.members()
+      .then(setMembers)
+      .catch(() => { setMembers([]); setLoadErr(true); });
   }, []);
 
-  const selected = members.find((m) => m.first_name === name);
+  const selected = members?.find((m) => m.first_name === name);
   const needsPassword = selected?.has_password;
 
   function handleNameChange(e) {
@@ -47,16 +50,16 @@ export default function Login() {
   return (
     <div className="login-wrap">
       <div className="login-card">
-        <div className="login-brand">Clube do <span className="brand-accent">Filme</span></div>
-        <p className="muted" style={{ marginBottom: '1.5rem', marginTop: '0.25rem' }}>
-          Escolha seu nome para entrar no clube.
-        </p>
+        <div className="login-card-head">
+          <h1 className="login-brand">Clube do <span className="brand-accent">Filme</span></h1>
+          <p className="muted login-sub">Escolha seu nome para entrar no clube.</p>
+        </div>
         <form onSubmit={submit} className="stack">
           <label>
             Membro
-            <select value={name} onChange={handleNameChange} required>
-              <option value="">— selecione —</option>
-              {members.map((m) => (
+            <select value={name} onChange={handleNameChange} required disabled={!members}>
+              <option value="">{members ? 'Selecione seu nome' : 'Carregando membros…'}</option>
+              {members?.map((m) => (
                 <option key={m.id} value={m.first_name}>{m.first_name}</option>
               ))}
             </select>
@@ -70,16 +73,21 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
+                autoComplete="current-password"
+                aria-invalid={err === 'Senha incorreta.' || undefined}
                 autoFocus
                 required
               />
             </label>
           )}
 
-          {err && <p className="error">{err}</p>}
+          {loadErr && (
+            <p className="error" role="alert">Não foi possível carregar os membros. Recarregue a página.</p>
+          )}
+          {err && <p className="error" role="alert">{err}</p>}
           <button
             type="submit"
-            className="primary"
+            className="primary block"
             disabled={busy || !name || (needsPassword && !password)}
             style={{ marginTop: '0.25rem' }}
           >

@@ -77,7 +77,7 @@ export default function App() {
       {updateReady && (
         <div className="update-banner" role="status">
           <span>Nova versão disponível</span>
-          <button className="btn primary" onClick={hardReload}>
+          <button type="button" className="btn primary" onClick={hardReload}>
             Atualizar
           </button>
         </div>
@@ -88,15 +88,24 @@ export default function App() {
 
 function Protected({ me, admin, children }) {
   if (!me) return <Navigate to="/login" replace />;
-  if (admin && !me.is_admin) return <p>Acesso restrito a administradores.</p>;
+  if (admin && !me.is_admin) {
+    return (
+      <div className="empty-state">
+        <strong>Acesso restrito</strong>
+        <span>Esta área é só para administradores.</span>
+        <Link to="/" className="btn">Voltar ao início</Link>
+      </div>
+    );
+  }
   return children;
 }
 
 function NotFound() {
   return (
-    <div>
+    <div className="empty-state">
       <h2>Página não encontrada</h2>
-      <Link to="/">Voltar</Link>
+      <span>O endereço pode estar errado ou a página foi removida.</span>
+      <Link to="/" className="btn primary">Voltar ao início</Link>
     </div>
   );
 }
