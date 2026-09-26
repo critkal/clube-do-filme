@@ -839,7 +839,19 @@ select {
 }
 .post-card:hover { border-color: var(--border-bright); }
 .post-card:active { background: var(--surface-2); }
-.post-card-link { display: block; color: inherit; text-decoration: none; }
+.post-card-link { display: block; color: inherit; text-decoration: none; border-radius: var(--radius); }
+.post-card-link:hover { color: inherit; }
+.post-card-link:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+.post-pending-count {
+  margin-left: auto;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(245, 183, 61, 0.12);
+  color: var(--amber);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.post-feed-hint { margin-left: auto; font-size: 0.72rem; }
 
 .post-header {
   display: flex;
@@ -895,6 +907,11 @@ select {
   margin-top: auto;
 }
 .post-avg { font-size: 0.8rem; }
+.post-rating .your-rating.pending {
+  background: transparent;
+  border: 1px dashed rgba(245, 183, 61, 0.45);
+  color: var(--amber);
+}
 
 /* ── RATING PICKER (1–10) ────────────────────────────── */
 .rating-picker {
@@ -930,6 +947,8 @@ select {
   color: var(--amber);
 }
 .rating-picker:not(.disabled) .rating-btn:hover { transform: scale(1.08); }
+.rating-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.rating-btn.on:hover:not(:disabled) { background: var(--amber); color: #181020; border-color: var(--amber); }
 .rating-picker.disabled .rating-btn { cursor: default; }
 .rating-picker.disabled .rating-btn:hover { transform: none; }
 
@@ -997,20 +1016,69 @@ select {
   transition: background 0.15s, border-color 0.15s, color 0.15s;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
-  min-height: auto;
+  min-height: var(--tap);
   text-align: left;
+  white-space: normal;
 }
 .cat-chip:hover { background: var(--surface-2); border-color: var(--amber); }
-.cat-chip.checked {
+.cat-chip:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.cat-chip.checked,
+.cat-chip.checked:hover:not(:disabled) {
   background: rgba(245, 183, 61, 0.15);
   border-color: var(--amber);
   color: var(--amber);
 }
+.cat-chip-mark { width: 0.8em; text-align: center; font-weight: 700; color: var(--muted); }
+.cat-chip.checked .cat-chip-mark { color: var(--amber); }
 .cat-chip-count {
   font-size: 0.72rem;
   opacity: 0.7;
   white-space: nowrap;
 }
+.cat-new { margin-top: 0.75rem; }
+.cat-new button { flex-shrink: 0; }
+
+/* Vote page (rating + referrals + comment) */
+.vote-movie {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding-bottom: 1.1rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.vote-movie-info { min-width: 0; }
+.vote-movie-title { font-size: 1.3rem; margin: 0 0 0.25rem; }
+.vote-movie-title .muted { font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 400; }
+.vote-movie-info p { margin: 0; }
+.vote-movie-info strong { color: var(--text); font-weight: 600; }
+.vote-movie-info .vote-status { margin-top: 0.5rem; font-size: 0.8rem; color: var(--amber); }
+.vote-form { gap: 1.75rem; }
+.vote-step { border: 0; margin: 0; padding: 0; min-width: 0; display: flex; flex-direction: column; }
+.vote-step-head {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0;
+  margin-bottom: 0.65rem;
+  text-transform: none;
+  letter-spacing: normal;
+}
+.vote-step-head .form-label { margin: 0; }
+.vote-step-aside { font-size: 0.78rem; }
+.vote-score { font-size: 0.9rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.vote-score strong { font-size: 1.35rem; color: var(--amber); font-weight: 700; }
+.vote-score.empty { font-size: 0.78rem; }
+.vote-hint { margin: 0.4rem 0 0; font-size: 0.78rem; line-height: 1.5; }
+.vote-hint-top { margin: 0 0 0.75rem; }
+.vote-submit { display: flex; flex-direction: column; gap: 0.25rem; }
+.vote-submit .btn { width: 100%; }
+.vote-submit .vote-hint { text-align: center; }
+.vote-blocked { display: flex; flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+.vote-blocked p { margin: 0; }
 
 /* ── NOMINEE ─────────────────────────────────────────── */
 .nominee {
@@ -1158,10 +1226,12 @@ p.loading::before, div.loading::before {
   padding: 0.45rem 0.5rem;
   text-align: left;
   cursor: pointer;
-  min-height: auto;
+  min-height: var(--tap);
   transition: background 0.12s;
 }
-.tmdb-suggestion-btn:hover { background: var(--surface-2); }
+.tmdb-suggestion-btn:hover,
+.tmdb-suggestion-btn:focus-visible { background: var(--surface-2); outline: none; }
+.tmdb-suggestion-btn:focus-visible { box-shadow: inset 0 0 0 2px var(--gold); }
 .tmdb-thumb {
   width: 36px;
   height: 54px;
@@ -1203,14 +1273,16 @@ p.loading::before, div.loading::before {
   border-top: 1px solid var(--border);
   color: var(--muted);
   font-size: 0.8rem;
-  padding: 0.5rem 0.5rem 0.3rem;
+  padding: 0.5rem;
   text-align: left;
   cursor: pointer;
-  min-height: auto;
+  min-height: var(--tap);
   margin-top: 0.2rem;
+  white-space: normal;
   transition: color 0.12s;
 }
 .tmdb-manual-btn:hover { color: var(--text); background: transparent; border-color: var(--border); }
+.tmdb-manual-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; color: var(--text); }
 .tmdb-selected {
   display: flex;
   align-items: center;
@@ -1227,24 +1299,75 @@ p.loading::before, div.loading::before {
   object-fit: cover;
   flex-shrink: 0;
 }
+.tmdb-selected-info { flex: 1; min-width: 0; }
+.tmdb-selected-title { margin: 0 0 0.15rem; font-weight: 600; font-size: 0.95rem; }
+.tmdb-selected-meta { margin: 0; font-size: 0.8rem; }
+.tmdb-selected .link-btn,
+.tmdb-manual-bar .link-btn { flex-shrink: 0; }
+.tmdb-manual-bar { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+
+.tmdb-search { display: flex; flex-direction: column; gap: 0.3rem; }
+.tmdb-search-field { position: relative; }
+.tmdb-search-field input { padding-right: 5.5rem; }
+.tmdb-searching {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  font-size: 0.8rem;
+  pointer-events: none;
+}
+.tmdb-status { margin: 0.15rem 0 0; min-height: 1.3em; font-size: 0.82rem; color: var(--muted); }
+.tmdb-status:empty { min-height: 0; margin: 0; }
+.tmdb-manual-link { align-self: flex-start; margin-left: -0.6rem; }
+
+/* Add-movie card on the season page */
+.add-movie-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; min-height: 36px; }
+.add-movie-head h2 { margin: 0; font-size: 1.1rem; }
+.add-movie-form { gap: 0.85rem; }
+.add-movie-hint { margin: 0; font-size: 0.8rem; }
+.add-movie-actions { display: flex; gap: 0.6rem; margin-top: 0.25rem; }
+.add-movie-actions .primary { flex: 1; }
 
 /* ── SEASON CARD ─────────────────────────────────────── */
 .season-card {
-  cursor: pointer;
+  position: relative;
   transition: border-color 0.2s, box-shadow 0.2s;
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
 }
+.season-card.is-active { border-color: rgba(245, 183, 61, 0.28); }
 .season-card:hover {
   border-color: var(--border-bright);
   box-shadow: 0 2px 14px rgba(0, 0, 0, 0.18);
 }
 .season-card:active { background: var(--surface-2); }
-.season-card:focus-visible {
+.season-card-link { color: var(--text); }
+.season-card-link:hover { color: var(--text); }
+.season-card-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius);
+}
+.season-card-link:focus-visible { outline: none; }
+.season-card-link:focus-visible::after {
   outline: 2px solid var(--gold);
   outline-offset: 2px;
 }
+.season-host-tag {
+  margin-left: 0.5rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--text);
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+.season-group-count { margin-left: auto; font-size: 0.75rem; }
+.season-group { gap: 0.75rem; }
 .season-card-header {
   display: flex;
   flex-direction: column;
@@ -1281,12 +1404,63 @@ p.loading::before, div.loading::before {
   font-size: 0.8rem;
 }
 .season-card-actions {
+  position: relative;
+  z-index: 1;
   display: flex;
   gap: 0.6rem;
   flex-wrap: wrap;
-  padding-top: 0.1rem;
+  padding-top: 0.85rem;
   border-top: 1px solid var(--border);
 }
+.season-card-actions .btn { flex: 1 1 auto; }
+
+/* Season page header, call-to-action and presentation queue */
+.season-head { display: flex; flex-direction: column; gap: 0.55rem; }
+.season-head-title { margin: 0; }
+.season-head .season-progress-label strong { color: var(--text); font-weight: 600; }
+.season-head-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.35rem; }
+.season-head-actions .btn { flex: 1 1 auto; }
+@media (min-width: 481px) {
+  .season-head-actions .btn,
+  .season-card-actions .btn { flex: 0 0 auto; }
+}
+.season-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1rem; }
+.season-cta-text { flex: 1 1 14rem; display: flex; flex-direction: column; gap: 0.15rem; }
+.season-cta .btn { flex: 1 1 auto; }
+@media (min-width: 481px) { .season-cta .btn { flex: 0 0 auto; } }
+.season-own-note { margin: 0; }
+
+.queue { padding: 0.35rem 1rem; }
+.queue-title { display: flex; align-items: baseline; gap: 0.5rem; font-size: 0.95rem; font-weight: 600; }
+.queue-count { font-size: 0.78rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+.queue-toggle-side { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; min-width: 0; }
+.queue-next-hint { font-size: 0.8rem; color: var(--muted); font-weight: 400; }
+.queue-next-hint strong { color: var(--text); font-weight: 600; }
+.queue-chevron { color: var(--muted); font-size: 0.85rem; transition: transform 0.2s; }
+.queue-chevron.open { transform: rotate(180deg); }
+.queue-list { list-style: none; padding: 0; margin: 0.25rem 0 0.5rem; }
+.queue-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0;
+  border-top: 1px solid var(--border);
+  font-size: 0.92rem;
+}
+.queue-item.done .queue-name { color: var(--muted); }
+.queue-num { min-width: 1.4rem; color: var(--muted); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+.queue-name { flex: 1; min-width: 0; }
+.queue-movie { font-size: 0.8rem; }
+.queue-next {
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: var(--gradient);
+  color: #181020;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.queue-check { color: var(--ok); font-size: 0.9rem; }
 
 /* ── MOVIE HERO ───────────────────────────────────────── */
 .movie-hero {

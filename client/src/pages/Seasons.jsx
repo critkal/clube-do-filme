@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { api } from '../api.js';
 
 export default function Seasons() {
@@ -20,32 +20,38 @@ export default function Seasons() {
     <div className="stack">
       <h1>Temporadas</h1>
 
-      {seasons.length === 0 && <p className="muted">Nenhuma temporada ainda.</p>}
+      {seasons.length === 0 && (
+        <div className="empty-state">
+          <p>Nenhuma temporada ainda.</p>
+          <p className="muted">Quando um admin criar a primeira temporada, ela aparece aqui.</p>
+        </div>
+      )}
 
       {active.length > 0 && (
-        <>
+        <section className="stack season-group" aria-labelledby="seasons-active">
           <div className="section-header">
-            <h2>Em andamento</h2>
+            <h2 id="seasons-active">Em andamento</h2>
           </div>
           <ul className="list">
             {active.map((s) => (
               <li key={s.id}><SeasonCard s={s} /></li>
             ))}
           </ul>
-        </>
+        </section>
       )}
 
       {past.length > 0 && (
-        <>
-          <div className="section-header" style={{ marginTop: active.length > 0 ? '0.5rem' : 0 }}>
-            <h2>Encerradas</h2>
+        <section className="stack season-group" aria-labelledby="seasons-past">
+          <div className="section-header">
+            <h2 id="seasons-past">Encerradas</h2>
+            <span className="muted season-group-count">{past.length}</span>
           </div>
           <ul className="list">
             {past.map((s) => (
               <li key={s.id}><SeasonCard s={s} /></li>
             ))}
           </ul>
-        </>
+        </section>
       )}
     </div>
   );
@@ -53,43 +59,47 @@ export default function Seasons() {
 
 const STATUS = {
   active: { cls: 'active', label: 'em andamento' },
-  completed: { cls: 'closed', label: 'encerrada' },
+  completed: { cls: 'closed', label: 'em votação' },
   presented: { cls: 'presented', label: 'apresentada' },
 };
 
 function SeasonCard({ s }) {
-  const navigate = useNavigate();
   const title = s.name || `Temporada #${s.id}`;
   const status = STATUS[s.status] || STATUS.completed;
-  const progress = s.rounds > 0 ? Math.round((s.movies_added / s.rounds) * 100) : 0;
-  const hasActions = s.status === 'completed' || s.status === 'presented';
+  const progress = s.rounds > 0 ? Math.min(100, Math.round((s.movies_added / s.rounds) * 100)) : 0;
 
   return (
-    <div
-      className="card season-card"
-      onClick={() => navigate(`/seasons/${s.id}`)}
-      role="link"
-      tabIndex={0}
-      onKeyDown={(e) => e.key === 'Enter' && navigate(`/seasons/${s.id}`)}
-    >
+    <div className={`card season-card ${s.status === 'active' ? 'is-active' : ''}`}>
       <div className="season-card-header">
         <div className="season-card-title-row">
-          <span className="season-card-title">{title}</span>
+          {/* Stretched over the card via ::after so the action links aren't nested in a link */}
+          <Link to={`/seasons/${s.id}`} className="season-card-link season-card-title">{title}</Link>
           <span className={`status-pill ${status.cls}`}>{status.label}</span>
         </div>
-        <div className="season-progress-track">
+        <div
+          className="season-progress-track"
+          role="progressbar"
+          aria-label="Filmes adicionados"
+          aria-valuemin={0}
+          aria-valuemax={s.rounds}
+          aria-valuenow={s.movies_added}
+        >
           <div className="season-progress-fill" style={{ width: `${progress}%` }} />
         </div>
-        <p className="season-progress-label">{s.movies_added} de {s.rounds} filmes adicionados</p>
+        <p className="season-progress-label">
+          {s.movies_added} de {s.rounds} filmes
+          {s.is_host && <span className="season-host-tag">você é o anfitrião</span>}
+        </p>
       </div>
-      {hasActions && (
-        <div className="season-card-actions" onClick={(e) => e.stopPropagation()}>
-          <Link to={`/seasons/${s.id}/final-voting`} className="btn" style={{ fontSize: '0.82rem', minHeight: '36px', padding: '0.4rem 0.85rem' }}>
-            Votação final
-          </Link>
-          <Link to={`/seasons/${s.id}/results`} className="btn" style={{ fontSize: '0.82rem', minHeight: '36px', padding: '0.4rem 0.85rem' }}>
-            Resultados
-          </Link>
+      {s.status === 'completed' && (
+        <div className="season-card-actions">
+          <Link to={`/seasons/${s.id}/final-voting`} className="btn primary">Votar agora</Link>
+          <Link to={`/seasons/${s.id}/results`} className="btn">Resultados</Link>
+        </div>
+      )}
+      {s.status === 'presented' && (
+        <div className="season-card-actions">
+          <Link to={`/seasons/${s.id}/results`} className="btn">Ver resultados</Link>
         </div>
       )}
     </div>
